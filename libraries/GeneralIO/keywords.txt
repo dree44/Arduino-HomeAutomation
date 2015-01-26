@@ -1,0 +1,21 @@
+G_Variable	KEYWORD1
+G_AnalogSensor	KEYWORD1
+G_DigitalSensor	KEYWORD1
+G_AnalogActuator	KEYWORD1
+G_DigitalActuator	KEYWORD1
+G_RFID	KEYWORD1
+G_DHTSensor	KEYWORD1
+G_Keypad4x4	KEYWORD1
+G_I2CLCD	KEYWORD1
+G_Clock	KEYWORD1
+G_Name	KEYWORD1
+gNames	KEYWORD1
+gSensors	KEYWORD1
+gActuators	KEYWORD1
+gEvents	KEYWORD1
+gTriggers	KEYWORD1
+TimedValue	KEYWORD1
+
+SerialPrintAllIO	KEYWORD2
+
+# Constants (LITERAL1)
