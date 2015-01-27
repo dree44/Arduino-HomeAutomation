@@ -10,7 +10,6 @@
 #include <SD.h>
 
 
-#define TIMEDVALUELENGTH 8
 #define ANALOGREADPERIOD 100
 #define DHTREADPERIOD 1000
 #define KEYPAD4X4READPERIOD 50
@@ -46,7 +45,8 @@ public:
 	bool change;
 	byte index;
 	G_IOBase();
-	virtual void print(String&,String ident="")=0;
+	virtual ~G_IOBase();
+	virtual void print(String&, String ident = "") = 0;
 	virtual String contentToString()=0;
 	boolean changed();
 	virtual void read();

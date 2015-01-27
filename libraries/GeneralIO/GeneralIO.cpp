@@ -180,6 +180,10 @@ G_IOBase::G_IOBase() {
 	index=0xff;
 }
 
+G_IOBase::~G_IOBase() {
+	index = 0xff;
+}
+
 boolean G_IOBase::changed() {
 	return change;
 }
@@ -188,8 +192,8 @@ void G_IOBase::read() {}
 void G_IOBase::trigger() {}
 void G_IOBase::set(TimedValue* tv) {}
 void G_IOBase::write() {}
-int G_IOBase::get() {return 0xffffffff;}
-int G_IOBase::getnew() {return 0xffffffff;}
+int G_IOBase::get() {return -1;}
+int G_IOBase::getnew() {return -1;}
 String G_IOBase::valueToString() {return "x";}
 
 void G_IOBase::SDSave(File f,byte tabs) {
@@ -435,7 +439,7 @@ G_RFID::G_RFID(byte x,byte y) {
 };
 	
 G_RFID::~G_RFID() {
-	delete serial;
+	//delete serial;
 };
 	
 void G_RFID::print(String& result,String ident) {
@@ -470,8 +474,8 @@ void G_RFID::set(TimedValue* tv) {
 
 void G_RFID::write() {
 	if(!outputvalue.stringType) return;
-    int k=0;
-	byte b;
+    unsigned int k=0;
+	byte b=0;
 	while(k<outputvalue.string.length()) {
 		if(k%2==0) b=CharToHex(outputvalue.string[k]);
 		if(k%2==1) {
@@ -671,7 +675,7 @@ G_I2CLCD::G_I2CLCD(byte x,byte y) {
 };
 	
 G_I2CLCD::~G_I2CLCD() {
-	delete lcd;
+	//delete lcd;
 }	
 	
 void G_I2CLCD::print(String& result,String ident) {
@@ -697,7 +701,7 @@ void G_I2CLCD::write() {
 	String putString="";
 	byte l=0;
 	byte c=0;
-	for(int i=0;i<outputvalue.string.length();++i) {
+	for(byte i=0;i<outputvalue.string.length();++i) {
 		if(outputvalue.string[i]=='[') command=true;
 		if(command && outputvalue.string[i]==']') {
 			if(commandString=="on") lcd->backlight();
@@ -834,8 +838,8 @@ boolean G_Condition::execute() {
 	if(relation==5) return true;
 	G_IOBase* sensor=gSensors.find(sensorIndex);
 	if(!sensor) return false;
-	int newvalue=sensor->getnew(); //with attrib number
-	int oldvalue=sensor->get();
+	unsigned int newvalue=sensor->getnew(); //with attrib number
+	unsigned int oldvalue=sensor->get();
 	switch(relation) {
 		case 0: return (newvalue==value);
 		case 1: return (oldvalue<value && newvalue>=value);
@@ -1134,13 +1138,13 @@ boolean G_SensorList::hasChange() {
 
 G_IOBase* G_SensorList::find(byte index) {
 	G_IOBase* g=0;
-	if(g=variables.find(index)) return g;
-	if(g=analogsensors.find(index)) return g;
-	if(g=digitalsensors.find(index)) return g;
-	if(g=rfids.find(index)) return g;
-	if(g=dhts.find(index)) return g;
-	if(g=keypads4x4.find(index)) return g;
-	if(g=clocks.find(index)) return g;
+	if((g=variables.find(index))) return g;
+	if((g=analogsensors.find(index))) return g;
+	if((g=digitalsensors.find(index))) return g;
+	if((g=rfids.find(index))) return g;
+	if((g=dhts.find(index))) return g;
+	if((g=keypads4x4.find(index))) return g;
+	if((g=clocks.find(index))) return g;
 	return 0;
 }
 
@@ -1228,6 +1232,7 @@ boolean G_SensorList::SDLoad(File& f,String& error) {
 		} else ;//return false;
 		iotypename="";
 	}
+	return true;
 }
 
 // -----------ActuatorList-----------
