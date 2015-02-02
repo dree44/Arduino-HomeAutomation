@@ -86,14 +86,19 @@ boolean ExtendedSD::LoadIO(String& error) {
 		if(!settings.available()) break;
 		for(char c=settings.read();settings.available() && c!='\"';c=settings.read()) listname+=c;
 		for(char c=settings.read();settings.available() && c!='{';c=settings.read());
-			Serial.println(listname);
 		if(!settings.available()) break;
 		if(listname==F("sensors")) {
 			if(!gSensors.SDLoad(settings,error)) break;
 		} else if(listname==F("actuators")) {
-		} else if(listname==F("events")) {
-		} else if(listname==F("triggers")) {
-		} else ;//return false;
+			if (!gActuators.SDLoad(settings, error)) break;
+		}
+		else if (listname == F("events")) {
+			if (!gEvents.SDLoad(settings, error)) break;
+		}
+		else if (listname == F("triggers")) {
+			if (!gTriggers.SDLoad(settings, error)) break;
+		}
+		else return false;
 		listname="";
 	}
 	settings.close();

@@ -172,26 +172,28 @@ void ParseTextCommand(String string,String& response,String& errorString) {
         } else if(command.command==DOWNLOAD) {
         } else if(command.command==C_INVALID && command.name!="" && (command.event!="" || command.value.numOfValue>0)) {
           command.command=SETVALUE;
-          G_IOBase* name=gNames.find(command.name);
+		  G_IOBase* name = gNames.find(command.name);
           G_IOBase* act=0;
           if(name) act=gActuators.find(name->index);
+		  G_IOBase* evName = gNames.find(command.event);
           if(act==0) {
             response=command.name;
             response+=F(" is not an actuator.");
-          } else if(command.event!="" && gNames.find(command.event)==0) {
+          } else if(command.event!="" && evName==0) {
             response=command.event;
             response+=F(" is not existing.");
           } else {
             if(command.event!="") {
-              G_Event* ev=((G_Event*)gEvents.list.find(name->index));
-              act->set(&ev->value);
+              G_Event* ev=((G_Event*)gEvents.list.find(evName->index));
+			  act->set(&(ev->value));
             } else {
-              act->set(&command.value);
+				Serial.println(command.value.contentToString());
+              act->set(&(command.value));
             }
             response=F("OK");
           }
         } else if(command.command==C_INVALID && command.name!="" && command.value.numOfValue==0) {
-          command.command==GETVALUE;
+          command.command=GETVALUE;
           response=command.name;
           G_IOBase* n=gNames.find(command.name);
           if(n) {

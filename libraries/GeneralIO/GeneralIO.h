@@ -36,6 +36,7 @@ public:
 	void read(int&); //return 0 if cleared the list
 	void purge();
 	void SDSave(File,byte);
+	boolean SDLoad(File& f, String&);
 };
 
 // *** IOs *********************
@@ -45,6 +46,7 @@ public:
 	bool change;
 	byte index;
 	G_IOBase();
+	G_IOBase(byte idx);
 	virtual ~G_IOBase();
 	virtual void print(String&, String ident = "") = 0;
 	virtual String contentToString()=0;
@@ -65,8 +67,10 @@ class G_Variable : public G_IOBase {
 	TimedValue comingValue;
 public:
 	G_Variable();
+	G_Variable(byte);
 	~G_Variable();
-	virtual void print(String&,String ident="");
+	void setup();
+	virtual void print(String&, String ident = "");
 	virtual String contentToString();
 	virtual void read();
 	virtual void set(TimedValue*);
@@ -74,6 +78,7 @@ public:
 	virtual int getnew() {return newvalue;};
 	virtual String valueToString();
 	virtual void SDSave(File,byte);
+	boolean SDLoad(File& f, String&);
 };
 // I
 class G_AnalogSensor : public G_IOBase {
@@ -84,6 +89,7 @@ class G_AnalogSensor : public G_IOBase {
 	unsigned short newvalue;
 public:
 	G_AnalogSensor(byte);
+	void setup();
 	virtual void print(String&,String ident="");
 	virtual String contentToString();
 	virtual void read();
@@ -91,6 +97,7 @@ public:
 	virtual int getnew() {return newvalue;};
 	virtual String valueToString();
 	virtual void SDSave(File,byte);
+	boolean SDLoad(File& f, String&);
 };
 // I
 class G_DigitalSensor : public G_IOBase {
@@ -100,13 +107,15 @@ class G_DigitalSensor : public G_IOBase {
 	boolean newvalue;
 public:
 	G_DigitalSensor(byte);
-	virtual void print(String&,String ident="");
+	void setup();
+	virtual void print(String&, String ident = "");
 	virtual String contentToString();
 	virtual void read();
 	virtual int get() {return value;};
 	virtual int getnew() {return newvalue;};
 	virtual String valueToString();
 	virtual void SDSave(File,byte);
+	boolean SDLoad(File& f, String&);
 };
 //     O
 class G_AnalogActuator : public G_IOBase {
@@ -115,12 +124,14 @@ class G_AnalogActuator : public G_IOBase {
 	TimedValue outputvalue;
 public:
 	G_AnalogActuator(byte);
-	virtual void print(String&,String ident="");
+	void setup();
+	virtual void print(String&, String ident = "");
 	virtual String contentToString();
 	virtual void set(TimedValue*);
 	virtual void write();
 	virtual String valueToString();
 	virtual void SDSave(File,byte);
+	boolean SDLoad(File& f, String&);
 };
 
 //     O
@@ -130,12 +141,14 @@ class G_DigitalActuator : public G_IOBase {
 	TimedValue outputvalue;
 public:
 	G_DigitalActuator(byte);
-	virtual void print(String&,String ident="");
+	void setup();
+	virtual void print(String&, String ident = "");
 	virtual String contentToString();
 	virtual void set(TimedValue*);
 	virtual void write();
 	virtual String valueToString();
 	virtual void SDSave(File,byte);
+	boolean SDLoad(File& f, String&);
 };
 // I & O
 class G_RFID : public G_IOBase {
@@ -146,15 +159,17 @@ class G_RFID : public G_IOBase {
 	String newvalue;
 	TimedValue outputvalue;
 public:
-	G_RFID(byte,byte);
+	G_RFID(byte);
 	~G_RFID();
-	virtual void print(String&,String ident="");
+	void setup();
+	virtual void print(String&, String ident = "");
 	virtual String contentToString();
 	virtual void read();
 	virtual void set(TimedValue*);
 	virtual void write();
 	virtual String valueToString();
 	virtual void SDSave(File,byte);
+	boolean SDLoad(File& f, String&);
 };
 // I
 class G_DHTSensor : public G_IOBase {
@@ -168,13 +183,15 @@ class G_DHTSensor : public G_IOBase {
 	double newhumi;
 public:
 	G_DHTSensor(byte);
-	virtual void print(String&,String ident="");
+	void setup();
+	virtual void print(String&, String ident = "");
 	virtual String contentToString();
 	virtual void read();
 //	virtual int get() {return value;}; todo//with attrib number
 //	virtual int getnew() {return newvalue;}; todo
 	virtual String valueToString();
 	virtual void SDSave(File,byte);
+	boolean SDLoad(File& f, String&);
 };
 // I
 class G_Keypad4x4 : public G_IOBase {
@@ -185,30 +202,37 @@ class G_Keypad4x4 : public G_IOBase {
 	char key;
 	char newkey;
 public:
-	G_Keypad4x4(byte[4],byte[4]);
-	virtual void print(String&,String ident="");
+	G_Keypad4x4(byte);
+	void setup();
+	virtual void print(String&, String ident = "");
 	virtual String contentToString();
 	virtual void read();
 	virtual int get() {return key;};
 	virtual int getnew() {return newkey;};
 	virtual String valueToString();
 	virtual void SDSave(File,byte);
+	boolean SDLoad(File& f, String&);
 };
 //     O
 class G_I2CLCD : public G_IOBase {
 	LiquidCrystal_I2C* lcd;
-	byte dpin;
-	byte spin;
+	byte sdapin;
+	byte sclpin;
+	byte i2cAddress;
+	byte rows;
+	byte columns;
 	
 	TimedValue outputvalue;
 public:
-	G_I2CLCD(byte,byte);
+	G_I2CLCD(byte);
 	~G_I2CLCD();
-	virtual void print(String&,String ident="");
+	void setup();
+	virtual void print(String&, String ident = "");
 	virtual String contentToString();
 	virtual void set(TimedValue*);
 	virtual void write();
 	virtual void SDSave(File,byte);
+	boolean SDLoad(File& f, String&);
 };
 // I
 class G_Clock : public G_IOBase {
@@ -218,13 +242,15 @@ class G_Clock : public G_IOBase {
 // todo: newvalue
 public:
 	G_Clock(byte);
-	virtual void print(String&,String ident="");
+	void setup();
+	virtual void print(String&, String ident = "");
 	virtual String contentToString();
 	virtual void read();
 //	virtual int get() {return value;};
 //	virtual int getnew() {return newvalue;};
 	virtual String valueToString();
 	virtual void SDSave(File,byte);
+	boolean SDLoad(File& f, String&);
 };
 
 // *** NAMES *********************
@@ -232,20 +258,23 @@ public:
 class G_Name : public G_IOBase {
 public:
 	String name;
+	G_Name();
 	G_Name(String);
 	virtual void print(String&,String ident="");
 	virtual String contentToString();
-	void SDSave(File,byte) {};
+	virtual void SDSave(File,byte) {};
+	boolean SDLoad(File& f, String&, byte&);
 };
 
 // *** Event *********************
 class G_Event : public G_IOBase {
 public:
 	TimedValue value;
-	G_Event(TimedValue&);
+	G_Event(byte);
 	virtual void print(String&,String ident="");
 	virtual String contentToString();
 	void SDSave(File,byte);
+	boolean SDLoad(File& f, String&);
 };
 
 // *** Condition *********************
@@ -265,12 +294,14 @@ public:
 	void print(String&);
 	String contentToString();
 	void SDSave(File,byte);
+	boolean SDLoad(File&, String&);
 };
 
 // *** Trigger *********************
 class G_Trigger : public G_IOBase {
 	unsigned long lastTick;
 	void fire();
+	void addCondition(G_Condition*);
 public:
 	byte triggeredActuator;
 	byte triggeredEvent; //0xff if not event
@@ -287,6 +318,7 @@ public:
 	virtual String contentToString();
 	virtual void trigger();
 	void SDSave(File,byte);
+	boolean SDLoad(File&, String&);
 };
 
 // *** I/O LISTS *********************
@@ -308,6 +340,7 @@ public:
 	void printWname(String&,boolean printname=true);
 	void toStringWname(String&,String s="",boolean printname=true);
 	void SDSave(File,byte);
+	boolean SDLoad(File& f, String& error, String iotypename);
 };
 
 class G_SensorList {
@@ -338,6 +371,7 @@ public:
 	void write();
 	G_IOBase* find(byte index);
 	void SDSave(File,byte);
+	boolean SDLoad(File&, String&);
 };
 
 // *** Event List *********************
@@ -346,6 +380,7 @@ public:
 	G_IOList list;
 	
 	void SDSave(File,byte);
+	boolean SDLoad(File&, String&);
 };
 
 // *** Trigger List *********************
@@ -355,6 +390,7 @@ public:
 	
 	void trigger();
 	void SDSave(File,byte);
+	boolean SDLoad(File&, String&);
 };
 
 // *** Global *********************

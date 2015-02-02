@@ -45,7 +45,7 @@ boolean IsLetter(char c) {
 }
 
 boolean IsNumber(char c) {
-  if(c>='0' && c <='9') return true;
+  if(c>='0' && c <='9' || c=='.') return true;
   return false;
 }
 
