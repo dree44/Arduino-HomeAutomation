@@ -15,6 +15,12 @@ int CharToHex(char in)
  } 
 }
 
+String DigitToHex(byte c) {
+	String result;
+	if (c<10) result += char(c + '0'); else result += char(c + 'A' - 10);
+	return result;
+}
+
 String ByteToHex(byte c) {
   String result;
   byte first=c/16;
@@ -24,11 +30,12 @@ String ByteToHex(byte c) {
   return result;
 }
 
-String doubleToString(double temp)
+String doubleToString(double temp,byte n)
 {
   char ascii[32];
   int frac;
-  frac=(unsigned int)(temp*1000)%1000;  //get three numbers to the right of the deciaml point
+  frac = (unsigned int)(temp*pow(10, n));
+  frac%= (unsigned int)pow(10, n);  //get n numbers to the right of the deciaml point
 
   itoa((int)temp,ascii,10);
   strcat(ascii,".");
@@ -66,3 +73,17 @@ void FREEMEM() {
   Serial.print(freeMemory());
   Serial.println(F(" bytes"));
 }	
+
+void MemoryCheck(WRITING out) {
+	Serial.print(F("MEMORY...   "));
+	if (freeMemory() < 1000) {
+		Serial.print(F("FAILED. - Low memory: "));
+		Serial.print(freeMemory());
+		Serial.println(F(" bytes."));
+	}
+	else {
+		Serial.print(F("OK.     - [ "));
+		Serial.print(freeMemory());
+		Serial.println(F(" bytes ]"));
+	}
+}

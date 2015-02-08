@@ -10,12 +10,16 @@ class ExtendedSD {
 	Sd2Card card;
 	SdVolume volume;
 	SdFile root;
+	boolean initok;
 public:
+	ExtendedSD() { initok = false; }
 	void DetailedCheck(WRITING);
 	void Init();
 	void Status(WRITING);
 	boolean LoadIO(String&);
 	void SaveIO();
 };
+
+extern ExtendedSD SDCard;
 
 #endif

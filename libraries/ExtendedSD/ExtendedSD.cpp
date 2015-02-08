@@ -1,13 +1,18 @@
 #include "ExtendedSD.h"
 #include <GeneralIO.h>
 
+ExtendedSD SDCard;
+
 void ExtendedSD::DetailedCheck(WRITING out) {
-  Serial.print(F("SD card: "));
+  Serial.print(F("SD card...  "));
+  if (!initok) {
+	  Serial.println(F("FAILED."));
+  } else
   if (!card.init(SPI_HALF_SPEED, SD_CHIP_SELECT_PIN)) {
-    Serial.println(F("card initialization failed."));
+    Serial.println(F("FAILED. - Card initialization failed."));
   } else {
     if (!volume.init(card)) {
-      Serial.println(F("partition initialization failed."));
+      Serial.println(F("FAILED. - Partition initialization failed."));
     } else {
       double volumesize;
       volumesize = volume.blocksPerCluster();    // clusters are collections of blocks
@@ -21,20 +26,20 @@ void ExtendedSD::DetailedCheck(WRITING out) {
 //      freevol /= 1024;
 //      freevol /= 1024;
 //      freevol /= 1024;
-      Serial.print(F("OK. [ ")); 
+      Serial.print(F("OK.     - [ ")); 
 //      Serial.print(freevol);
 //      Serial.print(F(" / ")); 
       Serial.print(volumesize);
       Serial.println(F(" Gb ]"));
       root.openRoot(volume);
-      root.ls(LS_R | LS_DATE | LS_SIZE);
+	  root.ls();
     }
   }
 }
 
 void ExtendedSD::Init() {
 	pinMode(SD_VIRTUAL_OUTPUT_PIN, OUTPUT); 
-	SD.begin();
+	initok=SD.begin();
 }
 
 void ExtendedSD::Status(WRITING out) {
@@ -88,7 +93,7 @@ boolean ExtendedSD::LoadIO(String& error) {
 		for(char c=settings.read();settings.available() && c!='{';c=settings.read());
 		if(!settings.available()) break;
 		if(listname==F("sensors")) {
-			if(!gSensors.SDLoad(settings,error)) break;
+			if (!gSensors.SDLoad(settings, error)) break;
 		} else if(listname==F("actuators")) {
 			if (!gActuators.SDLoad(settings, error)) break;
 		}

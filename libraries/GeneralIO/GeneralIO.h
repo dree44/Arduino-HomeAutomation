@@ -8,10 +8,11 @@
 #include <Wire.h> 
 #include <LiquidCrystal_I2C.h>
 #include <SD.h>
+#include <ExtendedEEPROM.h>
 
 
 #define ANALOGREADPERIOD 100
-#define DHTREADPERIOD 1000
+#define DHTREADPERIOD 2000
 #define KEYPAD4X4READPERIOD 50
 
 
@@ -27,10 +28,9 @@ public:
 	byte numOfValue;
 	TimedValue();
 	~TimedValue();
+	TimedValue(int);
 	void set(TimedValue& in);
 	void append(TimedValue& in);
-	void EEPROMRead(unsigned int& pos);
-	void EEPROMWrite(unsigned int& pos);
 	void print(String&);
 	String contentToString();
 	void read(int&); //return 0 if cleared the list
@@ -66,6 +66,9 @@ class G_Variable : public G_IOBase {
 	int newvalue;
 	TimedValue comingValue;
 public:
+	byte scale;
+	byte hexaPrint;
+
 	G_Variable();
 	G_Variable(byte);
 	~G_Variable();
@@ -158,6 +161,9 @@ class G_RFID : public G_IOBase {
 
 	String newvalue;
 	TimedValue outputvalue;
+
+	G_Variable* authz;
+	void authorize();
 public:
 	G_RFID(byte);
 	~G_RFID();
@@ -170,6 +176,8 @@ public:
 	virtual String valueToString();
 	virtual void SDSave(File,byte);
 	boolean SDLoad(File& f, String&);
+	
+	String setAuthorization(String serial, byte sector, String key, String content);
 };
 // I
 class G_DHTSensor : public G_IOBase {
@@ -177,18 +185,19 @@ class G_DHTSensor : public G_IOBase {
 	unsigned long lastRead;
 	byte pin;
 	
-	double temp;
-	double humi;
-	double newtemp;
-	double newhumi;
+	unsigned short temp;
+	unsigned short humi;
+	unsigned short newtemp;
+	unsigned short newhumi;
+
+	G_Variable* rh;
+	G_Variable* t;
 public:
 	G_DHTSensor(byte);
 	void setup();
 	virtual void print(String&, String ident = "");
 	virtual String contentToString();
 	virtual void read();
-//	virtual int get() {return value;}; todo//with attrib number
-//	virtual int getnew() {return newvalue;}; todo
 	virtual String valueToString();
 	virtual void SDSave(File,byte);
 	boolean SDLoad(File& f, String&);
@@ -201,6 +210,9 @@ class G_Keypad4x4 : public G_IOBase {
 	
 	char key;
 	char newkey;
+
+	int pin4;
+	G_Variable* p;
 public:
 	G_Keypad4x4(byte);
 	void setup();
@@ -215,7 +227,6 @@ public:
 };
 //     O
 class G_I2CLCD : public G_IOBase {
-	LiquidCrystal_I2C* lcd;
 	byte sdapin;
 	byte sclpin;
 	byte i2cAddress;
@@ -224,6 +235,7 @@ class G_I2CLCD : public G_IOBase {
 	
 	TimedValue outputvalue;
 public:
+	LiquidCrystal_I2C* lcd;
 	G_I2CLCD(byte);
 	~G_I2CLCD();
 	void setup();
@@ -236,13 +248,17 @@ public:
 };
 // I
 class G_Clock : public G_IOBase {
-	byte pin;
-	
-// todo: value
-// todo: newvalue
+	unsigned int year;
+	byte month;
+	byte day;
+	byte hour;
+	byte minute;
+	byte second;
+
+	unsigned long lastTick;
 public:
 	G_Clock(byte);
-	void setup();
+	void setup(unsigned int y=1,byte m=1,byte d=1,byte h=0,byte mi=0,byte s=0);
 	virtual void print(String&, String ident = "");
 	virtual String contentToString();
 	virtual void read();
@@ -401,6 +417,7 @@ extern G_SensorList gSensors;
 extern G_ActuatorList gActuators;
 extern G_TriggerList gTriggers;
 extern G_EventList gEvents;
+extern ExtendedEEPROMClass eeprom;
 
 
 #endif

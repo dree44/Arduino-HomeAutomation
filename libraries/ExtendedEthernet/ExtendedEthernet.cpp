@@ -1,16 +1,67 @@
 #include "ExtendedEthernet.h"
 #include <GeneralCommunication.h>
+#include <GeneralConfig.h>
+
+ExtendedEthernet ETH;
 
 void ExtendedEthernet::DetailedCheck(WRITING out) {
-  Serial.print(F("Ethernet: "));
+	Serial.print(F("Ethernet... "));
+	IPAddress local = Ethernet.localIP();
+	if (local[0] == 0 && local[1] == 0 && local[2] == 0 & local[3] == 0) {
+		Serial.println(F("FAILED."));
+		//return;
+	}
+	Serial.print(F("OK.     - [ "));
+	Serial.print(PrintMAC());
+	Serial.print(F(" | "));
+	Serial.print(PrintIP());
+	Serial.print(F(":"));
+	Serial.print(localPort);
+	Serial.print(F(" ]"));
+
+	Serial.println();
 }
 
 void ExtendedEthernet::Init() {
-  Ethernet.begin(mac,ip);
-  Udp.begin(localPort);
+	unsigned long m1 = gConfig.mac1();
+	unsigned int m2 = gConfig.mac2();
+	mac[0] = (m1 >> 24) & 0xFF;
+	mac[1] = (m1 >> 16) & 0xFF;
+	mac[2] = (m1 >> 8) & 0xFF;
+	mac[3] = m1 & 0xFF;
+	mac[4] = (m2 >> 8) & 0xFF;
+	mac[5] = m2 & 0xFF;
+	unsigned long i = gConfig.ip();
+	ip[0] = (i >> 24) & 0xFF;
+	ip[1] = (i >> 16) & 0xFF;
+	ip[2] = (i >> 8) & 0xFF;
+	ip[3] = i & 0xFF;
+	localPort = gConfig.localPort();
+
+	Ethernet.begin(mac,ip);
+	Udp.begin(localPort);
 }
 
 void ExtendedEthernet::Status(WRITING out) {
+}
+
+String ExtendedEthernet::PrintMAC() {
+	String result;
+	for (int i = 0; i < 6; i++) {
+		result+=ByteToHex(mac[i]);
+		if (i < 5) result += F(":");
+	}
+	return result;
+}
+
+String ExtendedEthernet::PrintIP() {
+	String result;
+	IPAddress local = Ethernet.localIP();
+	for (int i = 0; i < 4; i++) {
+		result += local[i];
+		if (i < 3) result += F(".");
+	}
+	return result;
 }
 
 void ExtendedEthernet::Receive() {

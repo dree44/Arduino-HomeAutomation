@@ -1,6 +1,8 @@
 #include "GeneralCommunication.h"
 #include <GeneralBasics.h>
 
+String serialInputString = "";
+
 void PrintCommands(String& result) {
   result=F("*** Usable Commands: \nhelp\n    usable command list (this printout)\nlist\n    listing pin settings, available events and applied triggers\nset name:stirng type:(analog|digital|swserial|humtemp) direction:(in|out) pin_id:byte\n    set up a pin\nclear (pin_id:byte | name:string)\n    remove a pin setting\nname\n    get the value of the sensor\nname TIMEDVALUE | @event\n    set the value of or apply event on the actuator\nsetevent @event:string TIMEDVALUE\n    set up an event.\n    TIMEDVALUE: value<time>value...32x | \"string\"\n        describe a value list or a value represented by a string\n        special strings: \"!\" means digital negalt\n                         \"PRINT\" means write out actual value on serial\nclearevent @event:string\n    clears the event settings\nsettrigger ~triggername:string {$periodictime:millisec | name((<-|->|=|<|>)value:byte)} name @event\n    set up triggering condition. periodictime=0 means allways\ncleartrigger ~triggername\n");
 }
@@ -170,7 +172,7 @@ void ParseTextCommand(String string,String& response,String& errorString) {
         } else if(command.command==STATUS) {
         } else if(command.command==UPLOAD) {
         } else if(command.command==DOWNLOAD) {
-        } else if(command.command==C_INVALID && command.name!="" && (command.event!="" || command.value.numOfValue>0)) {
+        } else if(command.command==C_INVALID && command.name!="" && (command.event!="" || command.value.numOfValue>0 || command.value.stringType)) {
           command.command=SETVALUE;
 		  G_IOBase* name = gNames.find(command.name);
           G_IOBase* act=0;
@@ -187,7 +189,6 @@ void ParseTextCommand(String string,String& response,String& errorString) {
               G_Event* ev=((G_Event*)gEvents.list.find(evName->index));
 			  act->set(&(ev->value));
             } else {
-				Serial.println(command.value.contentToString());
               act->set(&(command.value));
             }
             response=F("OK");
