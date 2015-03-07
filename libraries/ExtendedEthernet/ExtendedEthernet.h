@@ -8,22 +8,24 @@
 
 
 class ExtendedEthernet {
-	EthernetUDP Udp;
 	byte mac[6];
 	IPAddress ip;
+	IPAddress gateway;
+	IPAddress subnet;
 	unsigned int localPort;
 
 	byte udpMaxSegment;
 	char* udpPayload;
 public:
-	ExtendedEthernet() { 
+	EthernetUDP Udp;
+	ExtendedEthernet() {
 		udpMaxSegment=0xff;
 		udpPayload=0;
 	}
 	void DetailedCheck(WRITING);
 	void Init();
 	void Status(WRITING);
-	String PrintIP();
+	String PrintIP(IPAddress);
 	String PrintMAC();
 	void Receive();
 	void UDPParseStream(String udpStream,String& response);

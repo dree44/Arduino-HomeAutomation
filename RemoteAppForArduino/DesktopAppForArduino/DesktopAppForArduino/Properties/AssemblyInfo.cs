@@ -8,9 +8,9 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTitle("DesktopAppForArduino")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("General Electric")]
+[assembly: AssemblyCompany("Dree Soft")]
 [assembly: AssemblyProduct("DesktopAppForArduino")]
-[assembly: AssemblyCopyright("Copyright © General Electric 2015")]
+[assembly: AssemblyCopyright("Copyright © Dree 2015")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 

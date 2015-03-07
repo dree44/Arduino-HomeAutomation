@@ -28,33 +28,41 @@
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             this.sendBox = new System.Windows.Forms.TextBox();
             this.panel1 = new System.Windows.Forms.Panel();
-            this.ipText = new System.Windows.Forms.Label();
-            this.macText = new System.Windows.Forms.Label();
+            this.localPortText = new System.Windows.Forms.Label();
+            this.portText = new System.Windows.Forms.Label();
+            this.localIPBox = new System.Windows.Forms.TextBox();
             this.ipBox = new System.Windows.Forms.TextBox();
-            this.macBox = new System.Windows.Forms.TextBox();
+            this.ipText = new System.Windows.Forms.Label();
+            this.localIPText = new System.Windows.Forms.Label();
+            this.remotePortBox = new System.Windows.Forms.TextBox();
+            this.localPortBox = new System.Windows.Forms.TextBox();
             this.sendPanel = new System.Windows.Forms.Panel();
-            this.button11 = new System.Windows.Forms.Button();
-            this.button10 = new System.Windows.Forms.Button();
-            this.button6 = new System.Windows.Forms.Button();
-            this.button5 = new System.Windows.Forms.Button();
+            this.inputSaveButton = new System.Windows.Forms.Button();
+            this.inputLoadButton = new System.Windows.Forms.Button();
+            this.inputClearButton = new System.Windows.Forms.Button();
+            this.statusButton = new System.Windows.Forms.Button();
             this.sendButton = new System.Windows.Forms.Button();
-            this.button4 = new System.Windows.Forms.Button();
+            this.helpButton = new System.Windows.Forms.Button();
             this.button3 = new System.Windows.Forms.Button();
             this.button2 = new System.Windows.Forms.Button();
-            this.button1 = new System.Windows.Forms.Button();
+            this.listButton = new System.Windows.Forms.Button();
             this.label1 = new System.Windows.Forms.Label();
             this.panel2 = new System.Windows.Forms.Panel();
             this.clearAllButton = new System.Windows.Forms.Button();
-            this.button12 = new System.Windows.Forms.Button();
+            this.outputSaveButton = new System.Windows.Forms.Button();
             this.textBox1 = new System.Windows.Forms.TextBox();
             this.button9 = new System.Windows.Forms.Button();
             this.button8 = new System.Windows.Forms.Button();
-            this.button7 = new System.Windows.Forms.Button();
+            this.outputClearButton = new System.Windows.Forms.Button();
             this.receiveBox = new System.Windows.Forms.TextBox();
             this.label2 = new System.Windows.Forms.Label();
-            this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
+            this.inputOpenFileDialog = new System.Windows.Forms.OpenFileDialog();
+            this.inputSaveFileDialog = new System.Windows.Forms.SaveFileDialog();
+            this.outputSaveFileDialog = new System.Windows.Forms.SaveFileDialog();
+            this.timer = new System.Windows.Forms.Timer(this.components);
             this.panel1.SuspendLayout();
             this.sendPanel.SuspendLayout();
             this.panel2.SuspendLayout();
@@ -62,111 +70,163 @@
             // 
             // sendBox
             // 
+            this.sendBox.AcceptsReturn = true;
+            this.sendBox.AcceptsTab = true;
+            this.sendBox.Font = new System.Drawing.Font("Lucida Console", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(238)));
             this.sendBox.Location = new System.Drawing.Point(3, 48);
             this.sendBox.Multiline = true;
             this.sendBox.Name = "sendBox";
+            this.sendBox.ScrollBars = System.Windows.Forms.ScrollBars.Both;
             this.sendBox.Size = new System.Drawing.Size(522, 457);
             this.sendBox.TabIndex = 0;
+            this.sendBox.WordWrap = false;
             // 
             // panel1
             // 
             this.panel1.AutoSize = true;
             this.panel1.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
-            this.panel1.Controls.Add(this.ipText);
-            this.panel1.Controls.Add(this.macText);
+            this.panel1.Controls.Add(this.localPortText);
+            this.panel1.Controls.Add(this.portText);
+            this.panel1.Controls.Add(this.localIPBox);
             this.panel1.Controls.Add(this.ipBox);
-            this.panel1.Controls.Add(this.macBox);
+            this.panel1.Controls.Add(this.ipText);
+            this.panel1.Controls.Add(this.localIPText);
+            this.panel1.Controls.Add(this.remotePortBox);
+            this.panel1.Controls.Add(this.localPortBox);
             this.panel1.Location = new System.Drawing.Point(16, 13);
             this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(251, 56);
+            this.panel1.Size = new System.Drawing.Size(1038, 35);
             this.panel1.TabIndex = 1;
+            // 
+            // localPortText
+            // 
+            this.localPortText.AutoSize = true;
+            this.localPortText.Location = new System.Drawing.Point(805, 9);
+            this.localPortText.Name = "localPortText";
+            this.localPortText.Size = new System.Drawing.Size(81, 13);
+            this.localPortText.TabIndex = 6;
+            this.localPortText.Text = "Local UDP Port";
+            // 
+            // portText
+            // 
+            this.portText.AutoSize = true;
+            this.portText.Location = new System.Drawing.Point(235, 9);
+            this.portText.Name = "portText";
+            this.portText.Size = new System.Drawing.Size(92, 13);
+            this.portText.TabIndex = 2;
+            this.portText.Text = "Remote UDP Port";
+            // 
+            // localIPBox
+            // 
+            this.localIPBox.Enabled = false;
+            this.localIPBox.Location = new System.Drawing.Point(674, 6);
+            this.localIPBox.Name = "localIPBox";
+            this.localIPBox.Size = new System.Drawing.Size(125, 20);
+            this.localIPBox.TabIndex = 5;
+            // 
+            // ipBox
+            // 
+            this.ipBox.Location = new System.Drawing.Point(104, 6);
+            this.ipBox.Name = "ipBox";
+            this.ipBox.Size = new System.Drawing.Size(125, 20);
+            this.ipBox.TabIndex = 1;
+            this.ipBox.Text = "192.168.2.1";
+            this.ipBox.Leave += new System.EventHandler(this.ipBox_Leave);
             // 
             // ipText
             // 
             this.ipText.AutoSize = true;
-            this.ipText.Location = new System.Drawing.Point(3, 32);
+            this.ipText.Location = new System.Drawing.Point(3, 9);
             this.ipText.Name = "ipText";
             this.ipText.Size = new System.Drawing.Size(98, 13);
             this.ipText.TabIndex = 3;
             this.ipText.Text = "Remote IP Address";
             // 
-            // macText
+            // localIPText
             // 
-            this.macText.AutoSize = true;
-            this.macText.Location = new System.Drawing.Point(3, 6);
-            this.macText.Name = "macText";
-            this.macText.Size = new System.Drawing.Size(111, 13);
-            this.macText.TabIndex = 2;
-            this.macText.Text = "Remote MAC Address";
+            this.localIPText.AutoSize = true;
+            this.localIPText.Location = new System.Drawing.Point(573, 9);
+            this.localIPText.Name = "localIPText";
+            this.localIPText.Size = new System.Drawing.Size(87, 13);
+            this.localIPText.TabIndex = 7;
+            this.localIPText.Text = "Local IP Address";
             // 
-            // ipBox
+            // remotePortBox
             // 
-            this.ipBox.Location = new System.Drawing.Point(119, 29);
-            this.ipBox.Name = "ipBox";
-            this.ipBox.Size = new System.Drawing.Size(125, 20);
-            this.ipBox.TabIndex = 1;
+            this.remotePortBox.Location = new System.Drawing.Point(333, 6);
+            this.remotePortBox.Name = "remotePortBox";
+            this.remotePortBox.Size = new System.Drawing.Size(125, 20);
+            this.remotePortBox.TabIndex = 0;
+            this.remotePortBox.Text = "65000";
+            this.remotePortBox.Leave += new System.EventHandler(this.portBox_Leave);
             // 
-            // macBox
+            // localPortBox
             // 
-            this.macBox.Location = new System.Drawing.Point(119, 3);
-            this.macBox.Name = "macBox";
-            this.macBox.Size = new System.Drawing.Size(125, 20);
-            this.macBox.TabIndex = 0;
+            this.localPortBox.Location = new System.Drawing.Point(903, 6);
+            this.localPortBox.Name = "localPortBox";
+            this.localPortBox.Size = new System.Drawing.Size(125, 20);
+            this.localPortBox.TabIndex = 4;
+            this.localPortBox.Text = "65000";
+            this.localPortBox.Leave += new System.EventHandler(this.localPortBox_Leave);
             // 
             // sendPanel
             // 
             this.sendPanel.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.sendPanel.Controls.Add(this.button11);
-            this.sendPanel.Controls.Add(this.button10);
-            this.sendPanel.Controls.Add(this.button6);
-            this.sendPanel.Controls.Add(this.button5);
+            this.sendPanel.Controls.Add(this.inputSaveButton);
+            this.sendPanel.Controls.Add(this.inputLoadButton);
+            this.sendPanel.Controls.Add(this.inputClearButton);
+            this.sendPanel.Controls.Add(this.statusButton);
             this.sendPanel.Controls.Add(this.sendButton);
-            this.sendPanel.Controls.Add(this.button4);
+            this.sendPanel.Controls.Add(this.helpButton);
             this.sendPanel.Controls.Add(this.button3);
             this.sendPanel.Controls.Add(this.button2);
-            this.sendPanel.Controls.Add(this.button1);
+            this.sendPanel.Controls.Add(this.listButton);
             this.sendPanel.Controls.Add(this.label1);
             this.sendPanel.Controls.Add(this.sendBox);
-            this.sendPanel.Location = new System.Drawing.Point(17, 86);
+            this.sendPanel.Location = new System.Drawing.Point(17, 49);
             this.sendPanel.Name = "sendPanel";
-            this.sendPanel.Size = new System.Drawing.Size(530, 690);
+            this.sendPanel.Size = new System.Drawing.Size(530, 727);
             this.sendPanel.TabIndex = 2;
             // 
-            // button11
+            // inputSaveButton
             // 
-            this.button11.Location = new System.Drawing.Point(84, 26);
-            this.button11.Name = "button11";
-            this.button11.Size = new System.Drawing.Size(75, 23);
-            this.button11.TabIndex = 11;
-            this.button11.Text = "Save...";
-            this.button11.UseVisualStyleBackColor = true;
+            this.inputSaveButton.Location = new System.Drawing.Point(84, 26);
+            this.inputSaveButton.Name = "inputSaveButton";
+            this.inputSaveButton.Size = new System.Drawing.Size(75, 23);
+            this.inputSaveButton.TabIndex = 11;
+            this.inputSaveButton.Text = "Save...";
+            this.inputSaveButton.UseVisualStyleBackColor = true;
+            this.inputSaveButton.Click += new System.EventHandler(this.inputSaveButton_Click);
             // 
-            // button10
+            // inputLoadButton
             // 
-            this.button10.Location = new System.Drawing.Point(3, 26);
-            this.button10.Name = "button10";
-            this.button10.Size = new System.Drawing.Size(75, 23);
-            this.button10.TabIndex = 10;
-            this.button10.Text = "Load...";
-            this.button10.UseVisualStyleBackColor = true;
+            this.inputLoadButton.Location = new System.Drawing.Point(3, 26);
+            this.inputLoadButton.Name = "inputLoadButton";
+            this.inputLoadButton.Size = new System.Drawing.Size(75, 23);
+            this.inputLoadButton.TabIndex = 10;
+            this.inputLoadButton.Text = "Load...";
+            this.inputLoadButton.UseVisualStyleBackColor = true;
+            this.inputLoadButton.Click += new System.EventHandler(this.inputLoadButton_Click);
             // 
-            // button6
+            // inputClearButton
             // 
-            this.button6.Location = new System.Drawing.Point(450, 26);
-            this.button6.Name = "button6";
-            this.button6.Size = new System.Drawing.Size(75, 23);
-            this.button6.TabIndex = 9;
-            this.button6.Text = "clear";
-            this.button6.UseVisualStyleBackColor = true;
+            this.inputClearButton.Location = new System.Drawing.Point(450, 26);
+            this.inputClearButton.Name = "inputClearButton";
+            this.inputClearButton.Size = new System.Drawing.Size(75, 23);
+            this.inputClearButton.TabIndex = 9;
+            this.inputClearButton.Text = "clear";
+            this.inputClearButton.UseVisualStyleBackColor = true;
+            this.inputClearButton.Click += new System.EventHandler(this.inputClearButton_Click);
             // 
-            // button5
+            // statusButton
             // 
-            this.button5.Location = new System.Drawing.Point(286, 511);
-            this.button5.Name = "button5";
-            this.button5.Size = new System.Drawing.Size(75, 23);
-            this.button5.TabIndex = 8;
-            this.button5.Text = "status";
-            this.button5.UseVisualStyleBackColor = true;
+            this.statusButton.Location = new System.Drawing.Point(286, 511);
+            this.statusButton.Name = "statusButton";
+            this.statusButton.Size = new System.Drawing.Size(75, 23);
+            this.statusButton.TabIndex = 8;
+            this.statusButton.Text = "status";
+            this.statusButton.UseVisualStyleBackColor = true;
+            this.statusButton.Click += new System.EventHandler(this.statusButton_Click);
             // 
             // sendButton
             // 
@@ -176,15 +236,17 @@
             this.sendButton.TabIndex = 7;
             this.sendButton.Text = "Send";
             this.sendButton.UseVisualStyleBackColor = true;
+            this.sendButton.Click += new System.EventHandler(this.sendButton_Click);
             // 
-            // button4
+            // helpButton
             // 
-            this.button4.Location = new System.Drawing.Point(205, 536);
-            this.button4.Name = "button4";
-            this.button4.Size = new System.Drawing.Size(75, 23);
-            this.button4.TabIndex = 6;
-            this.button4.Text = "help";
-            this.button4.UseVisualStyleBackColor = true;
+            this.helpButton.Location = new System.Drawing.Point(205, 536);
+            this.helpButton.Name = "helpButton";
+            this.helpButton.Size = new System.Drawing.Size(75, 23);
+            this.helpButton.TabIndex = 6;
+            this.helpButton.Text = "help";
+            this.helpButton.UseVisualStyleBackColor = true;
+            this.helpButton.Click += new System.EventHandler(this.helpButton_Click);
             // 
             // button3
             // 
@@ -204,14 +266,15 @@
             this.button2.Text = "Upload I/O set\r\nSETTING.JSN";
             this.button2.UseVisualStyleBackColor = true;
             // 
-            // button1
+            // listButton
             // 
-            this.button1.Location = new System.Drawing.Point(205, 511);
-            this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(75, 23);
-            this.button1.TabIndex = 3;
-            this.button1.Text = "list IO";
-            this.button1.UseVisualStyleBackColor = true;
+            this.listButton.Location = new System.Drawing.Point(205, 511);
+            this.listButton.Name = "listButton";
+            this.listButton.Size = new System.Drawing.Size(75, 23);
+            this.listButton.TabIndex = 3;
+            this.listButton.Text = "list IO";
+            this.listButton.UseVisualStyleBackColor = true;
+            this.listButton.Click += new System.EventHandler(this.listButton_Click);
             // 
             // label1
             // 
@@ -226,16 +289,16 @@
             // 
             this.panel2.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.panel2.Controls.Add(this.clearAllButton);
-            this.panel2.Controls.Add(this.button12);
+            this.panel2.Controls.Add(this.outputSaveButton);
             this.panel2.Controls.Add(this.textBox1);
             this.panel2.Controls.Add(this.button9);
             this.panel2.Controls.Add(this.button8);
-            this.panel2.Controls.Add(this.button7);
+            this.panel2.Controls.Add(this.outputClearButton);
             this.panel2.Controls.Add(this.receiveBox);
             this.panel2.Controls.Add(this.label2);
-            this.panel2.Location = new System.Drawing.Point(552, 86);
+            this.panel2.Location = new System.Drawing.Point(552, 49);
             this.panel2.Name = "panel2";
-            this.panel2.Size = new System.Drawing.Size(502, 690);
+            this.panel2.Size = new System.Drawing.Size(502, 727);
             this.panel2.TabIndex = 3;
             // 
             // clearAllButton
@@ -248,14 +311,15 @@
             this.clearAllButton.UseVisualStyleBackColor = true;
             this.clearAllButton.Click += new System.EventHandler(this.clearAllButton_Click);
             // 
-            // button12
+            // outputSaveButton
             // 
-            this.button12.Location = new System.Drawing.Point(3, 27);
-            this.button12.Name = "button12";
-            this.button12.Size = new System.Drawing.Size(75, 23);
-            this.button12.TabIndex = 12;
-            this.button12.Text = "Save...";
-            this.button12.UseVisualStyleBackColor = true;
+            this.outputSaveButton.Location = new System.Drawing.Point(3, 27);
+            this.outputSaveButton.Name = "outputSaveButton";
+            this.outputSaveButton.Size = new System.Drawing.Size(75, 23);
+            this.outputSaveButton.TabIndex = 12;
+            this.outputSaveButton.Text = "Save...";
+            this.outputSaveButton.UseVisualStyleBackColor = true;
+            this.outputSaveButton.Click += new System.EventHandler(this.outputSaveButton_Click);
             // 
             // textBox1
             // 
@@ -282,14 +346,15 @@
             this.button8.Text = ">";
             this.button8.UseVisualStyleBackColor = true;
             // 
-            // button7
+            // outputClearButton
             // 
-            this.button7.Location = new System.Drawing.Point(418, 26);
-            this.button7.Name = "button7";
-            this.button7.Size = new System.Drawing.Size(75, 23);
-            this.button7.TabIndex = 10;
-            this.button7.Text = "clear";
-            this.button7.UseVisualStyleBackColor = true;
+            this.outputClearButton.Location = new System.Drawing.Point(418, 26);
+            this.outputClearButton.Name = "outputClearButton";
+            this.outputClearButton.Size = new System.Drawing.Size(75, 23);
+            this.outputClearButton.TabIndex = 10;
+            this.outputClearButton.Text = "clear";
+            this.outputClearButton.UseVisualStyleBackColor = true;
+            this.outputClearButton.Click += new System.EventHandler(this.outputClearButton_Click);
             // 
             // receiveBox
             // 
@@ -308,9 +373,16 @@
             this.label2.TabIndex = 0;
             this.label2.Text = "RECEIVE";
             // 
-            // openFileDialog1
+            // inputOpenFileDialog
             // 
-            this.openFileDialog1.FileName = "openFileDialog1";
+            this.inputOpenFileDialog.Filter = "JSON files (*.JSN)|*.JSN";
+            this.inputOpenFileDialog.FileOk += new System.ComponentModel.CancelEventHandler(this.openFileDialog1_FileOk);
+            // 
+            // timer
+            // 
+            this.timer.Enabled = true;
+            this.timer.Interval = 1000;
+            this.timer.Tick += new System.EventHandler(this.timer_Tick);
             // 
             // Form1
             // 
@@ -324,6 +396,7 @@
             this.Name = "Form1";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Desktop Communication with Arduino System";
+            this.Shown += new System.EventHandler(this.Form1_Shown);
             this.panel1.ResumeLayout(false);
             this.panel1.PerformLayout();
             this.sendPanel.ResumeLayout(false);
@@ -340,30 +413,37 @@
         private System.Windows.Forms.TextBox sendBox;
         private System.Windows.Forms.Panel panel1;
         private System.Windows.Forms.Label ipText;
-        private System.Windows.Forms.Label macText;
+        private System.Windows.Forms.Label portText;
         private System.Windows.Forms.TextBox ipBox;
-        private System.Windows.Forms.TextBox macBox;
+        private System.Windows.Forms.TextBox remotePortBox;
         private System.Windows.Forms.Panel sendPanel;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.Panel panel2;
         private System.Windows.Forms.Label label2;
-        private System.Windows.Forms.Button button6;
-        private System.Windows.Forms.Button button5;
+        private System.Windows.Forms.Button inputClearButton;
+        private System.Windows.Forms.Button statusButton;
         private System.Windows.Forms.Button sendButton;
-        private System.Windows.Forms.Button button4;
+        private System.Windows.Forms.Button helpButton;
         private System.Windows.Forms.Button button3;
         private System.Windows.Forms.Button button2;
-        private System.Windows.Forms.Button button1;
-        private System.Windows.Forms.Button button7;
+        private System.Windows.Forms.Button listButton;
+        private System.Windows.Forms.Button outputClearButton;
         private System.Windows.Forms.TextBox receiveBox;
-        private System.Windows.Forms.OpenFileDialog openFileDialog1;
+        private System.Windows.Forms.OpenFileDialog inputOpenFileDialog;
         private System.Windows.Forms.Button button8;
         private System.Windows.Forms.TextBox textBox1;
         private System.Windows.Forms.Button button9;
-        private System.Windows.Forms.Button button11;
-        private System.Windows.Forms.Button button10;
+        private System.Windows.Forms.Button inputSaveButton;
+        private System.Windows.Forms.Button inputLoadButton;
         private System.Windows.Forms.Button clearAllButton;
-        private System.Windows.Forms.Button button12;
+        private System.Windows.Forms.Button outputSaveButton;
+        private System.Windows.Forms.SaveFileDialog inputSaveFileDialog;
+        private System.Windows.Forms.SaveFileDialog outputSaveFileDialog;
+        private System.Windows.Forms.Timer timer;
+        private System.Windows.Forms.Label localPortText;
+        private System.Windows.Forms.TextBox localIPBox;
+        private System.Windows.Forms.Label localIPText;
+        private System.Windows.Forms.TextBox localPortBox;
     }
 }
 

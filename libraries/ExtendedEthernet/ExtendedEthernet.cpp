@@ -14,11 +14,14 @@ void ExtendedEthernet::DetailedCheck(WRITING out) {
 	Serial.print(F("OK.     - [ "));
 	Serial.print(PrintMAC());
 	Serial.print(F(" | "));
-	Serial.print(PrintIP());
+	Serial.print(PrintIP(Ethernet.localIP()));
 	Serial.print(F(":"));
 	Serial.print(localPort);
+	Serial.print(F("/"));
+	Serial.print(PrintIP(subnet));
+	Serial.print(F(" GATEWAY "));
+	Serial.print(PrintIP(gateway));
 	Serial.print(F(" ]"));
-
 	Serial.println();
 }
 
@@ -37,8 +40,18 @@ void ExtendedEthernet::Init() {
 	ip[2] = (i >> 8) & 0xFF;
 	ip[3] = i & 0xFF;
 	localPort = gConfig.localPort();
+	unsigned long g = gConfig.gateway();
+	gateway[0] = (g >> 24) & 0xFF;
+	gateway[1] = (g >> 16) & 0xFF;
+	gateway[2] = (g >> 8) & 0xFF;
+	gateway[3] = g & 0xFF;
+	unsigned long s = gConfig.subnet();
+	subnet[0] = (s >> 24) & 0xFF;
+	subnet[1] = (s >> 16) & 0xFF;
+	subnet[2] = (s >> 8) & 0xFF;
+	subnet[3] = s & 0xFF;
 
-	Ethernet.begin(mac,ip);
+	Ethernet.begin(mac,ip,gateway,gateway,subnet);
 	Udp.begin(localPort);
 }
 
@@ -54,9 +67,8 @@ String ExtendedEthernet::PrintMAC() {
 	return result;
 }
 
-String ExtendedEthernet::PrintIP() {
+String ExtendedEthernet::PrintIP(IPAddress local) {
 	String result;
-	IPAddress local = Ethernet.localIP();
 	for (int i = 0; i < 4; i++) {
 		result += local[i];
 		if (i < 3) result += F(".");
@@ -65,22 +77,24 @@ String ExtendedEthernet::PrintIP() {
 }
 
 void ExtendedEthernet::Receive() {
-	int packetSize = Udp.parsePacket();
-	//Serial.println(packetSize);
-	if(packetSize)
+	digitalWrite(10, LOW);
+
+	int packetSize = this->Udp.parsePacket();
+	if (packetSize>0)
 	{
+		Serial.println(packetSize);
 		// read the packet into packetBuffer
-		byte packetBuffer[UDP_TX_PACKET_MAX_SIZE]; //buffer to hold incoming packet,
-		Udp.read(packetBuffer,UDP_TX_PACKET_MAX_SIZE);
+		char packetBuffer[UDP_TX_PACKET_MAX_SIZE]; //buffer to hold incoming packet,
+		int x = this->Udp.read(packetBuffer, UDP_TX_PACKET_MAX_SIZE);
 		String response="";
 		byte packetType=packetBuffer[0];
 		if(packetType==0xff) { // control packet // udp stream starting packet with segment number
 			bool start=(packetBuffer[1]==0);
 			if(start) {
 				if(udpPayload!=0) delete udpPayload;
-				udpPayload=new char(udpMaxSegment*(UDP_TX_PACKET_MAX_SIZE-1)+1);
+				udpMaxSegment = packetBuffer[2];
+				udpPayload = new char[udpMaxSegment*(UDP_TX_PACKET_MAX_SIZE - 1) + 1];
 				udpPayload[0]='\0';
-				udpMaxSegment=packetBuffer[2];
 			} else if(udpMaxSegment!=0xff) { //end
 				UDPParseStream(udpPayload,response);
 				UDPSendback(response);
@@ -97,15 +111,16 @@ void ExtendedEthernet::Receive() {
 				Serial.print(": ");
 				Serial.println(response);
 			}
-		} else if(udpMaxSegment!=0xff) { // date segment after valid initialization
+		} else if(udpMaxSegment!=0xff) { // data segment after valid initialization
 			unsigned segmentNum=packetBuffer[0];
 			unsigned i;
-			for(i=1;i<packetSize;++i) {
+			for (i = 1; i<packetSize; ++i) {
 				udpPayload[segmentNum*(UDP_TX_PACKET_MAX_SIZE-1)+i-1]=packetBuffer[i];
 			}
 			udpPayload[(segmentNum)*(UDP_TX_PACKET_MAX_SIZE-1)+i-1]='\0';
 		}
 	}
+	digitalWrite(10, HIGH);
 }
 
 void ExtendedEthernet::UDPParseStream(String udpStream,String& response) {
@@ -116,18 +131,16 @@ void ExtendedEthernet::UDPParseStream(String udpStream,String& response) {
 
 void ExtendedEthernet::UDPSendback(String response) {
     byte segmensNum=response.length()/(UDP_TX_PACKET_MAX_SIZE-1)+1;
-    Serial.print("seg: ");
-    Serial.println(segmensNum);
-    uint8_t backBuffer0[3];
+    char backBuffer0[3];
     uint8_t backBuffer1[UDP_TX_PACKET_MAX_SIZE];
     uint8_t backBuffer2[2];
     // send back answer
     backBuffer0[0]=0xff;
     backBuffer0[1]=0x00;
     backBuffer0[2]=segmensNum;
-    Udp.beginPacket(Udp.remoteIP(), Udp.remotePort());
-    Udp.write(backBuffer0,3);
-    Udp.endPacket();
+	Udp.beginPacket(Udp.remoteIP(), Udp.remotePort());
+	Udp.write(backBuffer0,3);
+    int x=Udp.endPacket();
     delay(1);
     int i,k;
     for(i=0,k=0;i<segmensNum;++i) {

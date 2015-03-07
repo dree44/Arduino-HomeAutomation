@@ -22,24 +22,31 @@
 #include <avr/pgmspace.h>
 
 //prog_uchar m_[] PROGMEM = {""};    
-
 void setup() {
+	pinMode(53, OUTPUT);
+	pinMode(10, OUTPUT);
+	pinMode(4, OUTPUT);
+	digitalWrite(10,HIGH);
+	digitalWrite(4, HIGH);
   delay(3000);// todo basicsetting
   Serial.begin(9600);
 
+  digitalWrite(4, LOW);
   SDCard.Init();
   SDCard.DetailedCheck(GW_SERIAL);
-  
+  String error;
+  if (!SDCard.LoadIO(error)) Serial.println(error);
+  digitalWrite(4, HIGH);
+
+  digitalWrite(10, LOW);
   ETH.Init();
   ETH.DetailedCheck(GW_SERIAL);
-  
-  String error;
-  if(!SDCard.LoadIO(error)) Serial.println(error);
+  digitalWrite(10, HIGH);
 
   MemoryCheck(GW_SERIAL);
-
+ 
   //  SDCard.SaveIO();
-//  PrintPinSettings(GW_SERIAL);
+  //PrintPinSettings(GW_SERIAL);
 
   G_Name* bipName = (G_Name*)(gNames.find(gConfig.bipSensorName()));
   if (bipName) {
@@ -56,6 +63,8 @@ void setup() {
   //Clocksetup
 
 }
+char packetBuffer[UDP_TX_PACKET_MAX_SIZE]; //buffer to hold incoming packet,
+char  ReplyBuffer[] = "acknowledged";       // a string to send back
 
 void loop() {
   ETH.Receive();
@@ -70,6 +79,7 @@ void loop() {
  time loop() runs, so using delay inside loop can delay
  response.  Multiple bytes of data may be available.
  */
+
 void serialEvent() {
   while (Serial.available()) {
     char inChar = (char)Serial.read(); 

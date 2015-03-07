@@ -17,6 +17,8 @@ public:
 	unsigned int mac2();
 	unsigned long ip();
 	unsigned int localPort();
+	unsigned long subnet();
+	unsigned long gateway();
 
 };
 
