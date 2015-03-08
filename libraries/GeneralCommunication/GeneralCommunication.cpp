@@ -1,5 +1,6 @@
 #include "GeneralCommunication.h"
 #include <GeneralBasics.h>
+#include <ExtendedSD.h>
 
 String serialInputString = "";
 
@@ -150,7 +151,7 @@ FREEMEM();
   return true;
 }
 
-void ParseTextCommand(String string,String& response,String& errorString) {
+void ParseTextCommand(WRITING how, String string,String& response,String& errorString) {
       digitalWrite(21, HIGH);   // turn the LED on (HIGH is the voltage level)
       delay(10);               // wait for a second
       digitalWrite(21, LOW);    // turn the LED off by making the voltage LOW
@@ -169,9 +170,17 @@ void ParseTextCommand(String string,String& response,String& errorString) {
           PrintPinSettings(GW_SERIAL);
         } else if(command.command==HELP) {
           PrintCommands(response);
-        } else if(command.command==STATUS) {
-        } else if(command.command==UPLOAD) {
-        } else if(command.command==DOWNLOAD) {
+		}
+		else if (command.command == STATUS) {
+		}
+		else if (command.command == UPLOAD) {
+		}
+		else if (command.command == DOWNLOAD && command.name != "") {
+			response = "";
+			if (!SDCard.ReadFile(command.name, how)) {
+				response = F("Could not open ");
+				response += command.name;
+			}
         } else if(command.command==C_INVALID && command.name!="" && (command.event!="" || command.value.numOfValue>0 || command.value.stringType)) {
           command.command=SETVALUE;
 		  G_IOBase* name = gNames.find(command.name);

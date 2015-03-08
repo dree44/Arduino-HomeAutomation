@@ -1,5 +1,6 @@
 #include "ExtendedSD.h"
 #include <GeneralIO.h>
+#include <ExtendedEthernet.h>
 
 ExtendedSD SDCard;
 
@@ -108,4 +109,31 @@ boolean ExtendedSD::LoadIO(String& error) {
 	}
 	settings.close();
 	return true;
+}
+
+boolean ExtendedSD::ReadFile(String file,WRITING how) {
+	digitalWrite(10, HIGH);
+	digitalWrite(4, LOW);
+
+	File myFile = SD.open(file.c_str());
+	if (myFile) {
+		if (how == GW_SERIAL) {
+			while (myFile.available()) {
+				Serial.write(myFile.read());
+			}
+		}
+		else if (how == GW_UDP) {
+			ETH.UDPSendbackFile(myFile);
+			digitalWrite(10, HIGH);
+			digitalWrite(4, LOW);
+		}
+		// close the file:
+		myFile.close();
+		digitalWrite(4, HIGH);
+		return true;
+	}
+	else {
+		digitalWrite(4, HIGH);
+		return false;
+	}
 }

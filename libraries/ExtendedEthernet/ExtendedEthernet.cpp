@@ -77,6 +77,7 @@ String ExtendedEthernet::PrintIP(IPAddress local) {
 }
 
 void ExtendedEthernet::Receive() {
+	digitalWrite(4, HIGH);
 	digitalWrite(10, LOW);
 
 	int packetSize = this->Udp.parsePacket();
@@ -87,37 +88,39 @@ void ExtendedEthernet::Receive() {
 		char packetBuffer[UDP_TX_PACKET_MAX_SIZE]; //buffer to hold incoming packet,
 		int x = this->Udp.read(packetBuffer, UDP_TX_PACKET_MAX_SIZE);
 		String response="";
-		byte packetType=packetBuffer[0];
-		if(packetType==0xff) { // control packet // udp stream starting packet with segment number
-			bool start=(packetBuffer[1]==0);
+		bool packetType = (((byte)packetBuffer[0] == 0xff) && ((byte)packetBuffer[1] == 0xff));
+		if (packetType) { // control packet // udp stream starting packet with segment number
+			bool start=(packetBuffer[2]==0);
 			if(start) {
 				if(udpPayload!=0) delete udpPayload;
-				udpMaxSegment = packetBuffer[2];
-				udpPayload = new char[udpMaxSegment*(UDP_TX_PACKET_MAX_SIZE - 1) + 1];
+				udpMaxSegment = packetBuffer[3]*256+packetBuffer[4];
+				udpPayload = new char[udpMaxSegment*(UDP_TX_PACKET_MAX_SIZE - 2) + 1];
 				udpPayload[0]='\0';
-			} else if(udpMaxSegment!=0xff) { //end
+			} else if(udpMaxSegment!=0xffff) { //end
 				UDPParseStream(udpPayload,response);
-				UDPSendback(response);
-				udpMaxSegment=0xff;
-				// log sending
-				Serial.print("Sent to ");
-				IPAddress remote = Udp.remoteIP();
-				for (int i =0; i < 4; i++) {
-					Serial.print(remote[i], DEC);
-					if (i < 3)Serial.print(".");
+				if (response != "") {
+					UDPSendback(response);
+					udpMaxSegment = 0xffff;
+					// log sending
+					Serial.print("Sent to ");
+					IPAddress remote = Udp.remoteIP();
+					for (int i = 0; i < 4; i++) {
+						Serial.print(remote[i], DEC);
+						if (i < 3)Serial.print(".");
+					}
+					Serial.print(", port ");
+					Serial.print(Udp.remotePort());
+					Serial.print(": ");
+					Serial.println(response);
 				}
-				Serial.print(", port ");
-				Serial.print(Udp.remotePort());     
-				Serial.print(": ");
-				Serial.println(response);
 			}
-		} else if(udpMaxSegment!=0xff) { // data segment after valid initialization
-			unsigned segmentNum=packetBuffer[0];
-			unsigned i;
-			for (i = 1; i<packetSize; ++i) {
-				udpPayload[segmentNum*(UDP_TX_PACKET_MAX_SIZE-1)+i-1]=packetBuffer[i];
+		} else if(udpMaxSegment!=0xffff) { // data segment after valid initialization
+			unsigned short segmentNum=packetBuffer[0]*256+packetBuffer[1];
+			unsigned short i;
+			for (i = 2; i<packetSize; ++i) {
+				udpPayload[segmentNum*(UDP_TX_PACKET_MAX_SIZE-2)+i-2]=packetBuffer[i];
 			}
-			udpPayload[(segmentNum)*(UDP_TX_PACKET_MAX_SIZE-1)+i-1]='\0';
+			udpPayload[(segmentNum)*(UDP_TX_PACKET_MAX_SIZE-2)+i-2]='\0';
 		}
 	}
 	digitalWrite(10, HIGH);
@@ -125,39 +128,88 @@ void ExtendedEthernet::Receive() {
 
 void ExtendedEthernet::UDPParseStream(String udpStream,String& response) {
     String errorString="";
-    ParseTextCommand(udpStream,response,errorString);
+    ParseTextCommand(GW_UDP,udpStream,response,errorString);
     if(errorString!="") response="ERROR: "+errorString;
 }
 
 void ExtendedEthernet::UDPSendback(String response) {
-    byte segmensNum=response.length()/(UDP_TX_PACKET_MAX_SIZE-1)+1;
-    char backBuffer0[3];
+    short segmensNum=response.length()/(UDP_TX_PACKET_MAX_SIZE-2)+1;
+    char backBuffer0[5];
     uint8_t backBuffer1[UDP_TX_PACKET_MAX_SIZE];
-    uint8_t backBuffer2[2];
+    uint8_t backBuffer2[3];
     // send back answer
-    backBuffer0[0]=0xff;
-    backBuffer0[1]=0x00;
-    backBuffer0[2]=segmensNum;
+    backBuffer0[0] = 0xff;
+	backBuffer0[1] = 0xff;
+	backBuffer0[2] = 0x00;
+    backBuffer0[3] = (segmensNum >> 8) & 0xff;
+	backBuffer0[4] = segmensNum & 0xff;
 	Udp.beginPacket(Udp.remoteIP(), Udp.remotePort());
-	Udp.write(backBuffer0,3);
+	Udp.write(backBuffer0,5);
     int x=Udp.endPacket();
     delay(1);
     int i,k;
     for(i=0,k=0;i<segmensNum;++i) {
-		backBuffer1[0]=i;
+		backBuffer1[0]=(i>>8) & 0xff;
+		backBuffer1[1] = i & 0xff;
 		int j;
-		for(j=0;j<UDP_TX_PACKET_MAX_SIZE-1 && k<response.length();++j,++k){
-			backBuffer1[1+j]=response[k];
+		for(j=0;j<UDP_TX_PACKET_MAX_SIZE-2 && k<response.length();++j,++k){
+			backBuffer1[2+j]=response[k];
 		}
 		Udp.beginPacket(Udp.remoteIP(), Udp.remotePort());
-		Udp.write(backBuffer1,j+1);
+		Udp.write(backBuffer1,j+2);
 		Udp.endPacket();
 		delay(1);
     }
-    backBuffer2[0]=0xff;
-    backBuffer2[1]=0x01;
+    backBuffer2[0] = 0xff;
+	backBuffer2[1] = 0xff;
+	backBuffer2[2] = 0x01;
     Udp.beginPacket(Udp.remoteIP(), Udp.remotePort());
-    Udp.write(backBuffer2,2);
+    Udp.write(backBuffer2,3);
     Udp.endPacket();
     delay(1);
+}
+
+void ExtendedEthernet::UDPSendbackFile(File& file) {
+	short segmensNum = file.size() / (UDP_TX_PACKET_MAX_SIZE - 2) + 1;
+	Serial.println(file.size());
+	Serial.println(segmensNum);
+	char backBuffer0[5];
+	uint8_t backBuffer1[UDP_TX_PACKET_MAX_SIZE];
+	uint8_t backBuffer2[3];
+	// send back answer
+	backBuffer0[0] = 0xff;
+	backBuffer0[1] = 0xff;
+	backBuffer0[2] = 0x00;
+	backBuffer0[3] = (segmensNum >> 8) & 0xff;
+	backBuffer0[4] = segmensNum & 0xff;
+	Udp.beginPacket(Udp.remoteIP(), Udp.remotePort());
+	Udp.write(backBuffer0, 5);
+	int x = Udp.endPacket();
+	delay(1);
+	int i, k;
+	for (i = 0, k = 0; i<segmensNum; ++i) {
+		backBuffer1[0] = (i >> 8) & 0xff;
+		backBuffer1[1] = i & 0xff;
+		digitalWrite(10, HIGH);
+		digitalWrite(4, LOW);
+		int j;
+		for (j = 0; j<UDP_TX_PACKET_MAX_SIZE - 2 && file.available(); ++j, ++k){
+			byte b = file.read();
+			if (b == 0xff) { --j; --k; continue; }
+			backBuffer1[2 + j] = b;
+		}
+		digitalWrite(4, HIGH);
+		digitalWrite(10, LOW);
+		Udp.beginPacket(Udp.remoteIP(), Udp.remotePort());
+		Udp.write(backBuffer1, j + 2);
+		Udp.endPacket();
+		delay(1);
+	}
+	backBuffer2[0] = 0xff;
+	backBuffer2[1] = 0xff;
+	backBuffer2[2] = 0x01;
+	Udp.beginPacket(Udp.remoteIP(), Udp.remotePort());
+	Udp.write(backBuffer2, 3);
+	Udp.endPacket();
+	delay(1);
 }

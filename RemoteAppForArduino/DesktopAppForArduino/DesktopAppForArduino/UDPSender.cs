@@ -9,11 +9,11 @@ namespace DesktopAppForArduino
 {
     class UDPSender
     {
-        private int UDP_TX_PACKET_MAX_SIZE = 25;
+        private int UDP_TX_PACKET_MAX_SIZE = 24;
         Socket sendSocket;
         IPEndPoint remoteEndPoint;
         
-        uint udpMaxSegment=0xff;
+        ushort udpMaxSegment=0xffff;
         string udpReceivedPayload="";
 
         void delay(int ms)
@@ -38,30 +38,34 @@ namespace DesktopAppForArduino
             int size = p.Length;
             //sock.SendTo(send_buffer, offset, size,SocketFlags.None,endPoint);
 
-            byte segmensNum = (byte)(size / (UDP_TX_PACKET_MAX_SIZE - 1) + 1);
-            byte[] backBuffer0 = new byte[3];
+            ushort segmensNum = (ushort)(size / (UDP_TX_PACKET_MAX_SIZE - 2) + 1);
+            byte[] backBuffer0 = new byte[5];
             byte[] backBuffer1 = new byte[UDP_TX_PACKET_MAX_SIZE];
-            byte[] backBuffer2 = new byte[2];
+            byte[] backBuffer2 = new byte[3];
             // send back answer
             backBuffer0[0] = 0xff;
-            backBuffer0[1] = 0x00;
-            backBuffer0[2] = segmensNum;
-            sendSocket.SendTo(backBuffer0,remoteEndPoint);
+            backBuffer0[1] = 0xff;
+            backBuffer0[2] = 0x00;
+            backBuffer0[3] = (byte)((segmensNum >> 8) & 0xFF);
+            backBuffer0[4] = (byte)(segmensNum & 0xFF);
+            sendSocket.SendTo(backBuffer0, remoteEndPoint);
             delay(100000);
-            for (int k = 0, i = 0; i < segmensNum; ++i)
+            for (ushort k = 0, i = 0; i < segmensNum; ++i)
             {
-                backBuffer1[0] = (byte)i;
+                backBuffer1[0] = (byte)((i >> 8) & 0xFF);
+                backBuffer1[1] = (byte)(i & 0xFF);
                 int j;
-                for (j = 0; j < UDP_TX_PACKET_MAX_SIZE - 1 && k < size; ++j, ++k)
+                for (j = 0; j < UDP_TX_PACKET_MAX_SIZE - 2 && k < size; ++j, ++k)
                 {
-                    backBuffer1[1 + j] = (byte)p[k];
+                    backBuffer1[2 + j] = (byte)p[k];
                 }
-                sendSocket.SendTo(backBuffer1, 1 + j, SocketFlags.None, remoteEndPoint);
+                sendSocket.SendTo(backBuffer1, 2 + j, SocketFlags.None, remoteEndPoint);
                 delay(100000);
             }
 
             backBuffer2[0] = 0xff;
-            backBuffer2[1] = 0x01;
+            backBuffer2[1] = 0xff;
+            backBuffer2[2] = 0x01;
             sendSocket.SendTo(backBuffer2, remoteEndPoint);
 
         }
@@ -74,20 +78,20 @@ namespace DesktopAppForArduino
             {
 		        // read the packet into packetBuffer
                 int packetSize=sendSocket.ReceiveFrom(buffer, ref Remote);
-		        byte packetType=buffer[0];
-		        if(packetType==0xff) { // control packet // udp stream starting packet with segment number
-			        bool start=(buffer[1]==0);
+                Boolean control = (buffer[0] == 0xff && buffer[1] == 0xff);
+		        if(control) { // control packet // udp stream starting packet with segment number
+			        bool start=(buffer[2]==0);
 			        if(start) {
                         udpReceivedPayload = "";
-				        udpMaxSegment=buffer[2];
-			        } else if(udpMaxSegment!=0xff) { //end
-				        udpMaxSegment=0xff;
+				        udpMaxSegment=(ushort)(buffer[3]*256+buffer[4]);
+			        } else if(udpMaxSegment!=0xffff) { //end
+				        udpMaxSegment=0xffff;
                         return udpReceivedPayload;
                     }
-		        } else if(udpMaxSegment!=0xff) { // data segment after valid initialization
-			        uint segmentNum=buffer[0];
-			        uint i;
-			        for(i=1;i<packetSize;++i) {
+		        } else if(udpMaxSegment!=0xffff) { // data segment after valid initialization
+			        ushort segmentNum=(ushort)(buffer[0]*256+buffer[1]);
+			        ushort i;
+			        for(i=2;i<packetSize;++i) {
                         udpReceivedPayload += (char)buffer[i];
 			        }
                 }

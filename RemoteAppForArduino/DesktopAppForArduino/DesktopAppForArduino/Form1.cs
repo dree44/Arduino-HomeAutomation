@@ -16,9 +16,13 @@ namespace DesktopAppForArduino
     public partial class Form1 : Form
     {
         UDPSender udp;
+        String[] receivedPackets;
+        uint nReceivedPackets=0;
+        uint shownReceivedPackets = 0;
 
         public Form1()
         {
+            receivedPackets=new String[99];
             InitializeComponent();
             IPHostEntry host = Dns.GetHostEntry(Dns.GetHostName());
             localIPBox.Text=host.AddressList.FirstOrDefault(ip => ip.AddressFamily == AddressFamily.InterNetwork).ToString();
@@ -26,7 +30,9 @@ namespace DesktopAppForArduino
 
         private void clearAllButton_Click(object sender, EventArgs e)
         {
-
+            nReceivedPackets = 0;
+            receiveBox.Text = "";
+            packetNumBox.Text = "";
         }
 
         private void openFileDialog1_FileOk(object sender, CancelEventArgs e)
@@ -73,7 +79,15 @@ namespace DesktopAppForArduino
 
         private void outputClearButton_Click(object sender, EventArgs e)
         {
+            if (nReceivedPackets <= 0) return;
             receiveBox.ResetText();
+            uint i = shownReceivedPackets;
+            receivedPackets[i] = "";
+            for (; i < nReceivedPackets - 1; ++i) receivedPackets[i] = receivedPackets[i + 1];
+            nReceivedPackets--;
+            shownReceivedPackets--;
+            if (shownReceivedPackets < 0) shownReceivedPackets = 0;
+            if(nReceivedPackets>0) receiveBox.Text=receivedPackets[shownReceivedPackets];
         }
 
         private void outputSaveButton_Click(object sender, EventArgs e)
@@ -137,13 +151,56 @@ namespace DesktopAppForArduino
         private void timer_Tick(object sender, EventArgs e)
         {
             String packet=udp.ReceiveUDP();
-            if (packet != "") receiveBox.Text = packet;
+            if (packet != "") {
+                if(nReceivedPackets<99) {
+                    receivedPackets[nReceivedPackets]=packet; 
+                    ++nReceivedPackets;
+                    shownReceivedPackets = nReceivedPackets - 1;
+                } else {
+                    for(uint i=1; i<99; ++i) receivedPackets[i-1]=receivedPackets[i]; 
+                    receivedPackets[99]=packet;
+                }
+                receiveBox.Text = packet;
+                packetNumBox.Text = shownReceivedPackets.ToString();
+            }
 
         }
 
         private void localPortBox_Leave(object sender, EventArgs e)
         {
             udp.init(ipBox.Text, int.Parse(remotePortBox.Text), localIPBox.Text, int.Parse(localPortBox.Text));
+        }
+
+        private void minusButton_Click(object sender, EventArgs e)
+        {
+            if (nReceivedPackets == 0) return;
+            if (shownReceivedPackets == 0) shownReceivedPackets = nReceivedPackets-1;
+            else shownReceivedPackets--;
+            packetNumBox.Text = shownReceivedPackets.ToString();
+            receiveBox.Text = receivedPackets[shownReceivedPackets];
+        }
+
+        private void plusButton_Click(object sender, EventArgs e)
+        {
+            if (nReceivedPackets == 0) return;
+            if (shownReceivedPackets == nReceivedPackets-1) shownReceivedPackets = 0;
+            else shownReceivedPackets++;
+            packetNumBox.Text = shownReceivedPackets.ToString();
+            receiveBox.Text = receivedPackets[shownReceivedPackets];
+        }
+
+        private void dlIOButton_Click(object sender, EventArgs e)
+        {
+            sendBox.ResetText();
+            sendBox.Text = "download IOSET.JSN";
+            udp.SendUDP(sendBox.Text);
+        }
+
+        private void dlBasicButton_Click(object sender, EventArgs e)
+        {
+            sendBox.ResetText();
+            sendBox.Text = "download BASIC.JSN";
+            udp.SendUDP(sendBox.Text);
         }
 
     }

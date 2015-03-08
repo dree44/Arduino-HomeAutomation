@@ -40,6 +40,8 @@
             this.remotePortBox = new System.Windows.Forms.TextBox();
             this.localPortBox = new System.Windows.Forms.TextBox();
             this.sendPanel = new System.Windows.Forms.Panel();
+            this.dlBasicButton = new System.Windows.Forms.Button();
+            this.dlIOButton = new System.Windows.Forms.Button();
             this.inputSaveButton = new System.Windows.Forms.Button();
             this.inputLoadButton = new System.Windows.Forms.Button();
             this.inputClearButton = new System.Windows.Forms.Button();
@@ -53,9 +55,9 @@
             this.panel2 = new System.Windows.Forms.Panel();
             this.clearAllButton = new System.Windows.Forms.Button();
             this.outputSaveButton = new System.Windows.Forms.Button();
-            this.textBox1 = new System.Windows.Forms.TextBox();
-            this.button9 = new System.Windows.Forms.Button();
-            this.button8 = new System.Windows.Forms.Button();
+            this.packetNumBox = new System.Windows.Forms.TextBox();
+            this.minusButton = new System.Windows.Forms.Button();
+            this.plusButton = new System.Windows.Forms.Button();
             this.outputClearButton = new System.Windows.Forms.Button();
             this.receiveBox = new System.Windows.Forms.TextBox();
             this.label2 = new System.Windows.Forms.Label();
@@ -172,6 +174,8 @@
             // sendPanel
             // 
             this.sendPanel.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.sendPanel.Controls.Add(this.dlBasicButton);
+            this.sendPanel.Controls.Add(this.dlIOButton);
             this.sendPanel.Controls.Add(this.inputSaveButton);
             this.sendPanel.Controls.Add(this.inputLoadButton);
             this.sendPanel.Controls.Add(this.inputClearButton);
@@ -187,6 +191,26 @@
             this.sendPanel.Name = "sendPanel";
             this.sendPanel.Size = new System.Drawing.Size(530, 727);
             this.sendPanel.TabIndex = 2;
+            // 
+            // dlBasicButton
+            // 
+            this.dlBasicButton.Location = new System.Drawing.Point(104, 511);
+            this.dlBasicButton.Name = "dlBasicButton";
+            this.dlBasicButton.Size = new System.Drawing.Size(95, 48);
+            this.dlBasicButton.TabIndex = 13;
+            this.dlBasicButton.Text = "Download \r\nbasic\r\nBASIC.JSN";
+            this.dlBasicButton.UseVisualStyleBackColor = true;
+            this.dlBasicButton.Click += new System.EventHandler(this.dlBasicButton_Click);
+            // 
+            // dlIOButton
+            // 
+            this.dlIOButton.Location = new System.Drawing.Point(3, 511);
+            this.dlIOButton.Name = "dlIOButton";
+            this.dlIOButton.Size = new System.Drawing.Size(95, 48);
+            this.dlIOButton.TabIndex = 12;
+            this.dlIOButton.Text = "Download \r\nI/O set SETTING.JSN";
+            this.dlIOButton.UseVisualStyleBackColor = true;
+            this.dlIOButton.Click += new System.EventHandler(this.dlIOButton_Click);
             // 
             // inputSaveButton
             // 
@@ -250,20 +274,20 @@
             // 
             // button3
             // 
-            this.button3.Location = new System.Drawing.Point(104, 511);
+            this.button3.Location = new System.Drawing.Point(104, 565);
             this.button3.Name = "button3";
             this.button3.Size = new System.Drawing.Size(95, 48);
             this.button3.TabIndex = 5;
-            this.button3.Text = "Upload basic\r\nBASIC.JSN";
+            this.button3.Text = "Upload\r\nbasic\r\nBASIC.JSN";
             this.button3.UseVisualStyleBackColor = true;
             // 
             // button2
             // 
-            this.button2.Location = new System.Drawing.Point(3, 511);
+            this.button2.Location = new System.Drawing.Point(3, 565);
             this.button2.Name = "button2";
             this.button2.Size = new System.Drawing.Size(95, 48);
             this.button2.TabIndex = 4;
-            this.button2.Text = "Upload I/O set\r\nSETTING.JSN";
+            this.button2.Text = "Upload\r\nI/O set\r\nSETTING.JSN";
             this.button2.UseVisualStyleBackColor = true;
             // 
             // listButton
@@ -290,9 +314,9 @@
             this.panel2.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.panel2.Controls.Add(this.clearAllButton);
             this.panel2.Controls.Add(this.outputSaveButton);
-            this.panel2.Controls.Add(this.textBox1);
-            this.panel2.Controls.Add(this.button9);
-            this.panel2.Controls.Add(this.button8);
+            this.panel2.Controls.Add(this.packetNumBox);
+            this.panel2.Controls.Add(this.minusButton);
+            this.panel2.Controls.Add(this.plusButton);
             this.panel2.Controls.Add(this.outputClearButton);
             this.panel2.Controls.Add(this.receiveBox);
             this.panel2.Controls.Add(this.label2);
@@ -321,30 +345,33 @@
             this.outputSaveButton.UseVisualStyleBackColor = true;
             this.outputSaveButton.Click += new System.EventHandler(this.outputSaveButton_Click);
             // 
-            // textBox1
+            // packetNumBox
             // 
-            this.textBox1.Location = new System.Drawing.Point(395, 513);
-            this.textBox1.Name = "textBox1";
-            this.textBox1.Size = new System.Drawing.Size(77, 20);
-            this.textBox1.TabIndex = 13;
+            this.packetNumBox.Location = new System.Drawing.Point(395, 513);
+            this.packetNumBox.Name = "packetNumBox";
+            this.packetNumBox.ReadOnly = true;
+            this.packetNumBox.Size = new System.Drawing.Size(77, 20);
+            this.packetNumBox.TabIndex = 13;
             // 
-            // button9
+            // minusButton
             // 
-            this.button9.Location = new System.Drawing.Point(376, 511);
-            this.button9.Name = "button9";
-            this.button9.Size = new System.Drawing.Size(20, 23);
-            this.button9.TabIndex = 12;
-            this.button9.Text = "<";
-            this.button9.UseVisualStyleBackColor = true;
+            this.minusButton.Location = new System.Drawing.Point(376, 511);
+            this.minusButton.Name = "minusButton";
+            this.minusButton.Size = new System.Drawing.Size(20, 23);
+            this.minusButton.TabIndex = 12;
+            this.minusButton.Text = "<";
+            this.minusButton.UseVisualStyleBackColor = true;
+            this.minusButton.Click += new System.EventHandler(this.minusButton_Click);
             // 
-            // button8
+            // plusButton
             // 
-            this.button8.Location = new System.Drawing.Point(471, 511);
-            this.button8.Name = "button8";
-            this.button8.Size = new System.Drawing.Size(20, 23);
-            this.button8.TabIndex = 11;
-            this.button8.Text = ">";
-            this.button8.UseVisualStyleBackColor = true;
+            this.plusButton.Location = new System.Drawing.Point(471, 511);
+            this.plusButton.Name = "plusButton";
+            this.plusButton.Size = new System.Drawing.Size(20, 23);
+            this.plusButton.TabIndex = 11;
+            this.plusButton.Text = ">";
+            this.plusButton.UseVisualStyleBackColor = true;
+            this.plusButton.Click += new System.EventHandler(this.plusButton_Click);
             // 
             // outputClearButton
             // 
@@ -358,11 +385,16 @@
             // 
             // receiveBox
             // 
+            this.receiveBox.AcceptsReturn = true;
+            this.receiveBox.AcceptsTab = true;
+            this.receiveBox.Font = new System.Drawing.Font("Lucida Console", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(238)));
             this.receiveBox.Location = new System.Drawing.Point(0, 48);
             this.receiveBox.Multiline = true;
             this.receiveBox.Name = "receiveBox";
+            this.receiveBox.ScrollBars = System.Windows.Forms.ScrollBars.Both;
             this.receiveBox.Size = new System.Drawing.Size(493, 457);
             this.receiveBox.TabIndex = 1;
+            this.receiveBox.WordWrap = false;
             // 
             // label2
             // 
@@ -381,7 +413,6 @@
             // timer
             // 
             this.timer.Enabled = true;
-            this.timer.Interval = 1000;
             this.timer.Tick += new System.EventHandler(this.timer_Tick);
             // 
             // Form1
@@ -430,9 +461,9 @@
         private System.Windows.Forms.Button outputClearButton;
         private System.Windows.Forms.TextBox receiveBox;
         private System.Windows.Forms.OpenFileDialog inputOpenFileDialog;
-        private System.Windows.Forms.Button button8;
-        private System.Windows.Forms.TextBox textBox1;
-        private System.Windows.Forms.Button button9;
+        private System.Windows.Forms.Button plusButton;
+        private System.Windows.Forms.TextBox packetNumBox;
+        private System.Windows.Forms.Button minusButton;
         private System.Windows.Forms.Button inputSaveButton;
         private System.Windows.Forms.Button inputLoadButton;
         private System.Windows.Forms.Button clearAllButton;
@@ -444,6 +475,8 @@
         private System.Windows.Forms.TextBox localIPBox;
         private System.Windows.Forms.Label localIPText;
         private System.Windows.Forms.TextBox localPortBox;
+        private System.Windows.Forms.Button dlBasicButton;
+        private System.Windows.Forms.Button dlIOButton;
     }
 }
 

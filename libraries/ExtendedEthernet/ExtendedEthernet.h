@@ -5,6 +5,7 @@
 #include <Ethernet.h>
 #include <EthernetUdp.h>
 #include <GeneralLog.h>
+#include <SD.h>
 
 
 class ExtendedEthernet {
@@ -14,12 +15,12 @@ class ExtendedEthernet {
 	IPAddress subnet;
 	unsigned int localPort;
 
-	byte udpMaxSegment;
+	unsigned short udpMaxSegment;
 	char* udpPayload;
 public:
 	EthernetUDP Udp;
 	ExtendedEthernet() {
-		udpMaxSegment=0xff;
+		udpMaxSegment=0xffff;
 		udpPayload=0;
 	}
 	void DetailedCheck(WRITING);
@@ -30,6 +31,7 @@ public:
 	void Receive();
 	void UDPParseStream(String udpStream,String& response);
 	void UDPSendback(String response);
+	void UDPSendbackFile(File& file);
 };
 
 extern ExtendedEthernet ETH;

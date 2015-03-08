@@ -18,6 +18,7 @@ public:
 	void Status(WRITING);
 	boolean LoadIO(String&);
 	void SaveIO();
+	boolean ReadFile(String, WRITING);
 };
 
 extern ExtendedSD SDCard;
