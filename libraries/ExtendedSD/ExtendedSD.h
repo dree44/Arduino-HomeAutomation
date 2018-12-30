@@ -13,7 +13,7 @@ class ExtendedSD {
 	boolean initok;
 public:
 	ExtendedSD() { initok = false; }
-	void DetailedCheck(WRITING);
+	void DetailedCheck(String&);
 	void Init();
 	void Status(WRITING);
 	boolean LoadIO(String&);

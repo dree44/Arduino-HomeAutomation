@@ -132,6 +132,8 @@ public:
 	virtual String contentToString();
 	virtual void set(TimedValue*);
 	virtual void write();
+	virtual int get() { return value; };
+	virtual int getnew() { return value; };
 	virtual String valueToString();
 	virtual void SDSave(File,byte);
 	boolean SDLoad(File& f, String&);
@@ -149,6 +151,8 @@ public:
 	virtual String contentToString();
 	virtual void set(TimedValue*);
 	virtual void write();
+	virtual int get() { return value; };
+	virtual int getnew() { return value; };
 	virtual String valueToString();
 	virtual void SDSave(File,byte);
 	boolean SDLoad(File& f, String&);
@@ -385,6 +389,7 @@ public:
 	
 	void set(byte id,TimedValue*);
 	void write();
+	boolean hasChange();
 	G_IOBase* find(byte index);
 	void SDSave(File,byte);
 	boolean SDLoad(File&, String&);
@@ -410,7 +415,7 @@ public:
 };
 
 // *** Global *********************
-void SerialPrintAllIO();
+void PrintAllIO(String&);
 
 extern G_IOList gNames;
 extern G_SensorList gSensors;

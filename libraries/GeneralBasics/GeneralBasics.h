@@ -14,6 +14,6 @@ boolean IsLetter(char c);
 boolean IsNumber(char c);
 //void MString(String& str,prog_uchar* ptr);
 void FREEMEM();
-void MemoryCheck(WRITING out);
+void MemoryCheck(String&);
 
 #endif

@@ -4,16 +4,17 @@
 
 ExtendedSD SDCard;
 
-void ExtendedSD::DetailedCheck(WRITING out) {
-  Serial.print(F("SD card...  "));
+void ExtendedSD::DetailedCheck(String& response) {
+  digitalWrite(4, LOW);
+  response += (F("SD card...  "));
   if (!initok) {
-	  Serial.println(F("FAILED."));
+	  response += (F("FAILED.\n"));
   } else
   if (!card.init(SPI_HALF_SPEED, SD_CHIP_SELECT_PIN)) {
-    Serial.println(F("FAILED. - Card initialization failed."));
+	  response += (F("FAILED. - Card initialization failed.\n"));
   } else {
     if (!volume.init(card)) {
-      Serial.println(F("FAILED. - Partition initialization failed."));
+		response += (F("FAILED. - Partition initialization failed.\n"));
     } else {
       double volumesize;
       volumesize = volume.blocksPerCluster();    // clusters are collections of blocks
@@ -27,26 +28,30 @@ void ExtendedSD::DetailedCheck(WRITING out) {
 //      freevol /= 1024;
 //      freevol /= 1024;
 //      freevol /= 1024;
-      Serial.print(F("OK.     - [ ")); 
+	  response += (F("OK.     - [ "));
 //      Serial.print(freevol);
 //      Serial.print(F(" / ")); 
-      Serial.print(volumesize);
-      Serial.println(F(" Gb ]"));
+	  response += (volumesize);
+	  response += (F(" Gb ]\n"));
       root.openRoot(volume);
 	  root.ls();
     }
   }
+  digitalWrite(4, HIGH);
 }
 
 void ExtendedSD::Init() {
+	digitalWrite(4, LOW);
 	pinMode(SD_VIRTUAL_OUTPUT_PIN, OUTPUT); 
 	initok=SD.begin();
+	digitalWrite(4, HIGH);
 }
 
 void ExtendedSD::Status(WRITING out) {
 }
 
 void ExtendedSD::SaveIO() {
+  digitalWrite(4, LOW);
   SD.remove("ioset.jsn");
   File settings=SD.open("ioset.jsn",FILE_WRITE);
   byte tabs=0;
@@ -62,7 +67,8 @@ void ExtendedSD::SaveIO() {
   tabs--;
   settings.print("\n}\n");
   settings.close();
-/*
+  digitalWrite(4, HIGH);
+  /*
   File myFile = SD.open("ioset.jsn");
   if (myFile) {
     Serial.println("ioset.jsn:");
@@ -81,6 +87,7 @@ void ExtendedSD::SaveIO() {
 }
 
 boolean ExtendedSD::LoadIO(String& error) {
+	digitalWrite(4, LOW);
 	File settings=SD.open("ioset.jsn",FILE_READ);
 	if(!settings) {
 		error=F("Could not open \"ioset.jsn\" to read.");
@@ -108,6 +115,7 @@ boolean ExtendedSD::LoadIO(String& error) {
 		listname="";
 	}
 	settings.close();
+	digitalWrite(4, HIGH);
 	return true;
 }
 

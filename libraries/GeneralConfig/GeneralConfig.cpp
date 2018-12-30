@@ -52,9 +52,9 @@ unsigned long G_Config::ip() {
 	r <<= 8;
 	r += 168;
 	r <<= 8;
-	r += 2;
+	r += 3;
 	r <<= 8;
-	r += 1;
+	r += 3;
 	return r;
 }
 
@@ -67,7 +67,7 @@ unsigned long G_Config::subnet() {
 	r <<= 8;
 	r += 255;
 	r <<= 8;
-	r += 252;
+	r += 254;
 	r <<= 8;
 	r += 0;
 	return r;
@@ -78,7 +78,7 @@ unsigned long G_Config::gateway() {
 	r <<= 8;
 	r += 168;
 	r <<= 8;
-	r += 1;
+	r += 2;
 	r <<= 8;
 	r += 1;
 	return r;

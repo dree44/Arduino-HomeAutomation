@@ -1,19 +1,33 @@
 #include "GeneralCommunication.h"
 #include <GeneralBasics.h>
 #include <ExtendedSD.h>
+#include <ExtendedEthernet.h>
 
 String serialInputString = "";
 
-void PrintCommands(String& result) {
-  result=F("*** Usable Commands: \nhelp\n    usable command list (this printout)\nlist\n    listing pin settings, available events and applied triggers\nset name:stirng type:(analog|digital|swserial|humtemp) direction:(in|out) pin_id:byte\n    set up a pin\nclear (pin_id:byte | name:string)\n    remove a pin setting\nname\n    get the value of the sensor\nname TIMEDVALUE | @event\n    set the value of or apply event on the actuator\nsetevent @event:string TIMEDVALUE\n    set up an event.\n    TIMEDVALUE: value<time>value...32x | \"string\"\n        describe a value list or a value represented by a string\n        special strings: \"!\" means digital negalt\n                         \"PRINT\" means write out actual value on serial\nclearevent @event:string\n    clears the event settings\nsettrigger ~triggername:string {$periodictime:millisec | name((<-|->|=|<|>)value:byte)} name @event\n    set up triggering condition. periodictime=0 means allways\ncleartrigger ~triggername\n");
+void PrintCommands(String& response) {
+	response = F("*** Usable Commands: \nhelp\n    usable command list (this printout)\nlist\n    listing pin settings, available events and applied triggers\nset name:stirng type:(analog|digital|swserial|humtemp) direction:(in|out) pin_id:byte\n    set up a pin\nclear (pin_id:byte | name:string)\n    remove a pin setting\nname\n    get the value of the sensor\nname TIMEDVALUE | @event\n    set the value of or apply event on the actuator\nsetevent @event:string TIMEDVALUE\n    set up an event.\n    TIMEDVALUE: value<time>value...32x | \"string\"\n        describe a value list or a value represented by a string\n        special strings: \"!\" means digital negalt\n                         \"PRINT\" means write out actual value on serial\nclearevent @event:string\n    clears the event settings\nsettrigger ~triggername:string {$periodictime:millisec | name((<-|->|=|<|>)value:byte)} name @event\n    set up triggering condition. periodictime=0 means allways\ncleartrigger ~triggername\n");
 }
 
-void PrintPinSettings(WRITING w) {
-  SerialPrintAllIO();
-  FREEMEM();
+void PrintStatus(String& response) {
+	String result="";
+	response = "";
+	SDCard.DetailedCheck(result);
+	response += result;
+	result = "";
+//	digitalWrite(4, HIGH);
+
+//	digitalWrite(10, LOW);
+	ETH.DetailedCheck(result);
+	response += result;
+	result = "";
+//	digitalWrite(10, HIGH);
+
+	MemoryCheck(result);
+	response += result;
 }
 
-bool ParseSerial(String serialString,String& errorString,struct COMMAND& command) {
+bool ParseSerial(String serialString, String& errorString, struct COMMAND& command) {
 FREEMEM();
 
   String tokens[16];
@@ -167,13 +181,15 @@ void ParseTextCommand(WRITING how, String string,String& response,String& errorS
 //        Serial.println(errorString);
       } else {
         if(command.command==LIST) {
-          PrintPinSettings(GW_SERIAL);
+			PrintAllIO(response);
         } else if(command.command==HELP) {
-          PrintCommands(response);
+			PrintCommands(response);
 		}
 		else if (command.command == STATUS) {
+			PrintStatus(response);
 		}
 		else if (command.command == UPLOAD) {
+
 		}
 		else if (command.command == DOWNLOAD && command.name != "") {
 			response = "";

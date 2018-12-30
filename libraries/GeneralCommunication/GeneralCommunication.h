@@ -25,9 +25,10 @@ struct COMMAND {
 };
 
 void PrintCommands(String& result);
-void PrintPinSettings(WRITING);
-bool ParseSerial(String serialString,String& errorString,struct COMMAND& command);
+void PrintStatus(String& result);
+bool ParseSerial(String serialString, String& errorString, struct COMMAND& command);
 void ParseTextCommand(WRITING, String string,String& response,String& errorString);
+
 
 extern String serialInputString;
 

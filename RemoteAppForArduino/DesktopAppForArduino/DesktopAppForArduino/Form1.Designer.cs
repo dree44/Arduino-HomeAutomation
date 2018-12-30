@@ -132,7 +132,7 @@
             this.ipBox.Name = "ipBox";
             this.ipBox.Size = new System.Drawing.Size(125, 20);
             this.ipBox.TabIndex = 1;
-            this.ipBox.Text = "192.168.2.1";
+            this.ipBox.Text = "192.168.3.3";
             this.ipBox.Leave += new System.EventHandler(this.ipBox_Leave);
             // 
             // ipText

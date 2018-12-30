@@ -4,28 +4,33 @@
 
 ExtendedEthernet ETH;
 
-void ExtendedEthernet::DetailedCheck(WRITING out) {
-	Serial.print(F("Ethernet... "));
+void ExtendedEthernet::DetailedCheck(String& out) {
+	digitalWrite(10, LOW);
+	out += (F("Ethernet... "));
 	IPAddress local = Ethernet.localIP();
 	if (local[0] == 0 && local[1] == 0 && local[2] == 0 & local[3] == 0) {
-		Serial.println(F("FAILED."));
+		out+=(F("FAILED.\n"));
 		//return;
 	}
-	Serial.print(F("OK.     - [ "));
-	Serial.print(PrintMAC());
-	Serial.print(F(" | "));
-	Serial.print(PrintIP(Ethernet.localIP()));
-	Serial.print(F(":"));
-	Serial.print(localPort);
-	Serial.print(F("/"));
-	Serial.print(PrintIP(subnet));
-	Serial.print(F(" GATEWAY "));
-	Serial.print(PrintIP(gateway));
-	Serial.print(F(" ]"));
-	Serial.println();
+	
+	
+	
+	out+=(F("OK.     - [ "));
+	out += (PrintMAC());
+	out += (F(" | "));
+	out += (PrintIP(Ethernet.localIP()));
+	out += (F(":"));
+	out += (localPort);
+	out += (F("/"));
+	out += (PrintIP(subnet));
+	out += (F(" GATEWAY "));
+	out += (PrintIP(gateway));
+	out += (F(" ]\n"));
+	digitalWrite(10, HIGH);
 }
 
 void ExtendedEthernet::Init() {
+	digitalWrite(10, LOW);
 	unsigned long m1 = gConfig.mac1();
 	unsigned int m2 = gConfig.mac2();
 	mac[0] = (m1 >> 24) & 0xFF;
@@ -53,6 +58,7 @@ void ExtendedEthernet::Init() {
 
 	Ethernet.begin(mac,ip,gateway,gateway,subnet);
 	Udp.begin(localPort);
+	digitalWrite(10, HIGH);
 }
 
 void ExtendedEthernet::Status(WRITING out) {

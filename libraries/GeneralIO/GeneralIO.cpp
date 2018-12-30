@@ -26,7 +26,15 @@ TimedValue::~TimedValue() {
 }
 
 void TimedValue::set(TimedValue& in) {
-	lastRead=in.lastRead;
+	if (value) delete value;
+	if (time) delete time;
+	lastRead = -1;
+	value = 0;
+	time = 0;
+	numOfValue = 0;
+	nextvalue = 0;
+
+	lastRead = in.lastRead;
     stringType=in.stringType;
     numOfValue=in.numOfValue;
     nextvalue=in.nextvalue;
@@ -462,11 +470,13 @@ void G_AnalogActuator::set(TimedValue* tv) {
 }
 
 void G_AnalogActuator::write() {
+	change = false;
 	int out=value;
 	outputvalue.read(out);
 	if((unsigned short)out!=value) {
 		value=(unsigned short)out;
 		analogWrite(pin,value);
+		change = true;
 	}
 }
 
@@ -523,11 +533,13 @@ void G_DigitalActuator::set(TimedValue* tv) {
 }
 
 void G_DigitalActuator::write() {
+	change = false;
 	int out=value;
 	outputvalue.read(out);
 	if((boolean)out!=value) {
 		value=(boolean)out;
 		digitalWrite(pin,value);
+		change = true;
 	}
 }
 
@@ -1345,6 +1357,7 @@ void G_Condition::print(String& result) {
 boolean G_Condition::execute() {
 	if(relation==5) return true;
 	G_IOBase* sensor=gSensors.find(sensorIndex);
+	if (!sensor) sensor = gActuators.find(sensorIndex); //todo common find
 	if(!sensor) return false;
 	unsigned int newvalue=sensor->getnew(); //with attrib number
 	unsigned int oldvalue=sensor->get();
@@ -1360,7 +1373,8 @@ boolean G_Condition::execute() {
 
 boolean G_Condition::hasChange() {
 	G_IOBase* s=gSensors.find(sensorIndex);
-	if(s && s->change) return true;
+	if (!s) s = gActuators.find(sensorIndex); //todo common find
+	if (s && s->change) return true;
 	return false;
 }
 
@@ -1395,7 +1409,7 @@ boolean G_Condition::SDLoad(File& f, String& error) {
 	if (!f.available()) return false;
 	for (char c = f.read(); f.available() && c != '\"'; c = f.read()) str += c;
 	G_IOBase* n;
-	if (!(n = gNames.find(str)) || !gSensors.find(n->index)) { error += str; error = F(" is not existing sensor in a condition.\""); return false; }
+	if (!(n = gNames.find(str)) ) { error += str; error += F(" is not existing sensor or actuator in a condition.\""); return false; }
 	sensorIndex = n->index;
 	str = "";
 	for (char c = f.read(); f.available() && c != '\"'; c = f.read());
@@ -1566,12 +1580,12 @@ boolean G_Trigger::SDLoad(File& f, String& error) {
 		for (char c = f.read(); f.available() && c != '['; c = f.read());
 		for(boolean end=false;;) {
 			G_Condition* cond = new G_Condition();
-			if (!cond->SDLoad(f, error)) { delete cond; return false; }
+			if (!cond->SDLoad(f, error)) { 
+				delete cond; return false; }
 			this->addCondition(cond);
 			char c;
 			for (c = f.read(); f.available() && c != ']' && c != ','; c = f.read());
 			if (c == ']') end = true;
-			String s; s += c;
 			if (end) break;
 		}
 	}
@@ -2106,55 +2120,56 @@ boolean G_TriggerList::SDLoad(File& f, String& error) {
 }
 
 // -----------Global-----------
-void SerialPrintAllIO() {
+void PrintAllIO(String& response) {
+	response = "";
 	String ident=F("   ");
 	String str;
-	Serial.println(F("\nIO LIST:"));
-	Serial.println(F("Analog senrors:"));
+	response+=(F("\nIO LIST:\n"));
+	response += (F("Analog senrors:\n"));
 	gSensors.analogsensors.toStringWname(str,ident);
-	if(str!="") Serial.print(str);
+	if (str != "") response += (str);
 	str="";
-	Serial.println(F("Digital senrors:"));
+	response += (F("Digital senrors:\n"));
 	gSensors.digitalsensors.toStringWname(str,ident);
-	if(str!="") Serial.print(str);
+	if (str != "") response += (str);
 	str="";
-	Serial.println(F("Analog actuators:"));
+	response += (F("Analog actuators:\n"));
 	gActuators.analogactuators.toStringWname(str,ident);
-	if(str!="") Serial.print(str);
+	if (str != "") response += (str);
 	str="";
-	Serial.println(F("Digital actuators:"));
+	response += (F("Digital actuators:\n"));
 	gActuators.digitalactuators.toStringWname(str,ident);
-	if(str!="") Serial.print(str);
+	if (str != "") response += (str);
 	str="";
-	Serial.println(F("DHT senrors:"));
+	response += (F("DHT senrors:\n"));
 	gSensors.dhts.toStringWname(str,ident);
-	if(str!="") Serial.print(str);
+	if (str != "") response += (str);
 	str="";
-	Serial.println(F("4x4 Keypads:"));
+	response += (F("4x4 Keypads:\n"));
 	gSensors.keypads4x4.toStringWname(str,ident);
-	if(str!="") Serial.print(str);
+	if (str != "") response += (str);
 	str="";
-	Serial.println(F("I2C LCDs:"));
+	response += (F("I2C LCDs:\n"));
 	gActuators.i2clcds.toStringWname(str,ident);
-	if(str!="") Serial.print(str);
+	if (str != "") response += (str);
 	str="";
-	Serial.println(F("RFIDs:"));
+	response += (F("RFIDs:\n"));
 	gSensors.rfids.toStringWname(str,ident);
-	if(str!="") Serial.print(str);
+	if (str != "") response += (str);
 	str="";
-	Serial.println(F("Clocks:"));
+	response += (F("Clocks:\n"));
 	gSensors.clocks.toStringWname(str,ident);
-	if(str!="") Serial.print(str);
+	if (str != "") response += (str);
 	str="";
-	Serial.println(F("Variables:"));
+	response += (F("Variables:\n"));
 	gSensors.variables.toStringWname(str,ident);
-	if(str!="") Serial.print(str);
+	if (str != "") response += (str);
 	str="";
-	Serial.println(F("\nEVENT LIST:"));
+	response += (F("\nEVENT LIST:\n"));
 	gEvents.list.toStringWname(str,ident);
-	if(str!="") Serial.print(str);
+	if (str != "") response += (str);
 	str="";
-	Serial.println(F("\nTRIGGER LIST:"));
+	response += (F("\nTRIGGER LIST:\n"));
 	gTriggers.list.toStringWname(str,ident,false);
-	if(str!="") Serial.print(str);
+	if (str != "") response += (str);
 }

@@ -30,21 +30,24 @@ void setup() {
 	digitalWrite(4, HIGH);
   delay(3000);// todo basicsetting
   Serial.begin(9600);
+  String out;
 
-  digitalWrite(4, LOW);
   SDCard.Init();
-  SDCard.DetailedCheck(GW_SERIAL);
+  out = "";
+  SDCard.DetailedCheck(out);
+  Serial.print(out);
   String error;
   if (!SDCard.LoadIO(error)) Serial.println(error);
-  digitalWrite(4, HIGH);
 
-  digitalWrite(10, LOW);
   ETH.Init();
-  ETH.DetailedCheck(GW_SERIAL);
-  digitalWrite(10, HIGH);
+  out = "";
+  ETH.DetailedCheck(out);
+  Serial.print(out);
 
-  MemoryCheck(GW_SERIAL);
- 
+  out = "";
+  MemoryCheck(out);
+  Serial.print(out);
+
   //  SDCard.SaveIO();
   //PrintPinSettings(GW_SERIAL);
 

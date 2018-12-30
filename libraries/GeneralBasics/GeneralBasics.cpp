@@ -74,16 +74,14 @@ void FREEMEM() {
   Serial.println(F(" bytes"));
 }	
 
-void MemoryCheck(WRITING out) {
-	Serial.print(F("MEMORY...   "));
+void MemoryCheck(String& out) {
+	out+=(F("MEMORY...   "));
 	if (freeMemory() < 1000) {
-		Serial.print(F("FAILED. - Low memory: "));
-		Serial.print(freeMemory());
-		Serial.println(F(" bytes."));
+		out += (F("FAILED. - Low memory: "));
 	}
 	else {
-		Serial.print(F("OK.     - [ "));
-		Serial.print(freeMemory());
-		Serial.println(F(" bytes ]"));
+		out += (F("OK.     - [ "));
 	}
+	out += (freeMemory());
+	out += (F(" bytes ]\n"));
 }

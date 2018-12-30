@@ -23,7 +23,7 @@ public:
 		udpMaxSegment=0xffff;
 		udpPayload=0;
 	}
-	void DetailedCheck(WRITING);
+	void DetailedCheck(String&);
 	void Init();
 	void Status(WRITING);
 	String PrintIP(IPAddress);
