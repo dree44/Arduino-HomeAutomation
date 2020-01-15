@@ -16,12 +16,14 @@ namespace DesktopAppForArduino
     public partial class Form1 : Form
     {
         UDPSender udp;
+        TCPSender tcp=new TCPSender();
         String[] receivedPackets;
         uint nReceivedPackets=0;
         uint shownReceivedPackets = 0;
 
         public Form1()
         {
+           
             receivedPackets=new String[99];
             InitializeComponent();
             IPHostEntry host = Dns.GetHostEntry(Dns.GetHostName());
@@ -129,7 +131,9 @@ namespace DesktopAppForArduino
 
         private void sendButton_Click(object sender, EventArgs e)
         {
-            udp.SendUDP(sendBox.Text);
+            //IPEndPoint("12",12);
+            tcp.SendTCP(sendBox.Text);
+
         }
 
         private void ipBox_Leave(object sender, EventArgs e)
@@ -141,6 +145,9 @@ namespace DesktopAppForArduino
         {
             udp=new UDPSender();
             udp.init(ipBox.Text, int.Parse(remotePortBox.Text), localIPBox.Text, int.Parse(localPortBox.Text));
+
+            tcp.init(ipBox.Text, int.Parse(remotePortBox.Text), localIPBox.Text, int.Parse(localPortBox.Text));
+        
         }
 
         private void portBox_Leave(object sender, EventArgs e)
@@ -201,6 +208,11 @@ namespace DesktopAppForArduino
             sendBox.ResetText();
             sendBox.Text = "download BASIC.JSN";
             udp.SendUDP(sendBox.Text);
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            udp.SendUploadUDP("2.prb",sendBox.Text);
         }
 
     }

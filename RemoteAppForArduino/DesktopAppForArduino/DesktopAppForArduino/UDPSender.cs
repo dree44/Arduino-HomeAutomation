@@ -25,7 +25,9 @@ namespace DesktopAppForArduino
         internal void init(string ip, int port, string localip, int localport)
         {
             if (sendSocket!=null) sendSocket.Close();
-            sendSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+            //sendSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+            sendSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            
             remoteEndPoint = new IPEndPoint(IPAddress.Parse(ip), port);
             sendSocket.Bind(new IPEndPoint(IPAddress.Parse(localip), localport));
 
@@ -49,7 +51,7 @@ namespace DesktopAppForArduino
             backBuffer0[3] = (byte)((segmensNum >> 8) & 0xFF);
             backBuffer0[4] = (byte)(segmensNum & 0xFF);
             sendSocket.SendTo(backBuffer0, remoteEndPoint);
-            delay(100000);
+            delay(100);
             for (ushort k = 0, i = 0; i < segmensNum; ++i)
             {
                 backBuffer1[0] = (byte)((i >> 8) & 0xFF);
@@ -60,7 +62,7 @@ namespace DesktopAppForArduino
                     backBuffer1[2 + j] = (byte)p[k];
                 }
                 sendSocket.SendTo(backBuffer1, 2 + j, SocketFlags.None, remoteEndPoint);
-                delay(100000);
+                delay(100);
             }
 
             backBuffer2[0] = 0xff;
@@ -69,6 +71,7 @@ namespace DesktopAppForArduino
             sendSocket.SendTo(backBuffer2, remoteEndPoint);
 
         }
+
         internal string ReceiveUDP()
         {
             IPEndPoint sender = new IPEndPoint(IPAddress.Any, 0);
@@ -97,6 +100,48 @@ namespace DesktopAppForArduino
                 }
             }
             return "";
+        }
+        internal void SendUploadUDP(string file, string p)
+        {
+            // string text = p;
+            //byte[] send_buffer = Encoding.ASCII.GetBytes(text);
+            p += '\0';
+            int size = p.Length;
+            //sock.SendTo(send_buffer, offset, size,SocketFlags.None,endPoint);
+
+            ushort segmensNum = (ushort)(size / (UDP_TX_PACKET_MAX_SIZE - 2) + 1);
+            byte[] backBuffer0 = new byte[UDP_TX_PACKET_MAX_SIZE];
+            byte[] backBuffer1 = new byte[UDP_TX_PACKET_MAX_SIZE];
+            byte[] backBuffer2 = new byte[3];
+            // send back answer
+            backBuffer0[0] = 0xff;
+            backBuffer0[1] = 0xff;
+            backBuffer0[2] = 0x02;
+            ushort q;
+            for (q = 3; q-3<file.Length; ++q)
+            {
+                backBuffer0[q] = (byte)file[q - 3];
+            }
+            backBuffer0[q]=(byte)'\0';
+            sendSocket.SendTo(backBuffer0, remoteEndPoint);
+            delay(100);
+            for (ushort k = 0, i = 0; i < segmensNum; ++i)
+            {
+                backBuffer1[0] = (byte)0;
+                backBuffer1[1] = (byte)0;
+                int j;
+                for (j = 0; j < UDP_TX_PACKET_MAX_SIZE - 2 && k < size; ++j, ++k)
+                {
+                    backBuffer1[2 + j] = (byte)p[k];
+                }
+                sendSocket.SendTo(backBuffer1, 2 + j, SocketFlags.None, remoteEndPoint);
+                delay(100);
+            }
+            backBuffer2[0] = 0xff;
+            backBuffer2[1] = 0xff;
+            backBuffer2[2] = 0x01;
+            sendSocket.SendTo(backBuffer2, remoteEndPoint);
+
         }
     }
 }

@@ -38,8 +38,8 @@ void TimedValue::set(TimedValue& in) {
     stringType=in.stringType;
     numOfValue=in.numOfValue;
     nextvalue=in.nextvalue;
- 	if(numOfValue>0) value=new int[numOfValue];
-	if(numOfValue>1) time=new int[numOfValue-1];
+ 	if(numOfValue>0) value=new byte[numOfValue];
+	if(numOfValue>1) time=new unsigned short[numOfValue-1];
     int i;
     for(i=0;i<numOfValue;++i) {
       value[i]=in.value[i];
@@ -48,23 +48,36 @@ void TimedValue::set(TimedValue& in) {
     string=in.string;
  }
 
-TimedValue::TimedValue(int v) {
+TimedValue::TimedValue(byte v) {
 	lastRead = -1;
 	stringType = false;
 	string = "";
 	numOfValue = 1;
 	nextvalue = 0;
-	value = new int[numOfValue];
+	value = new byte[numOfValue];
 	time = 0;
 	value[0] = v;
 }
 
+TimedValue::TimedValue(byte v1, unsigned short t,byte v2) {
+	lastRead = -1;
+	stringType = false;
+	string = "";
+	numOfValue = 2;
+	nextvalue = 0;
+	value = new byte[numOfValue];
+	time = new unsigned short[numOfValue-1];
+	time[0] = t;
+	value[0] = v1;
+	value[1] = v2;
+}
+
 void TimedValue::append(TimedValue& in) {
     if(stringType || in.stringType) return;
-    int* newvalue=0;
-	if(numOfValue+in.numOfValue>0) newvalue=new int[numOfValue+in.numOfValue];
-    int* newtime=0;
-	if(numOfValue+in.numOfValue>1) newtime=new int[numOfValue+in.numOfValue-1];
+    byte* newvalue=0;
+	if(numOfValue+in.numOfValue>0) newvalue=new byte[numOfValue+in.numOfValue];
+    unsigned short* newtime=0;
+	if(numOfValue+in.numOfValue>1) newtime=new unsigned short[numOfValue+in.numOfValue-1];
     for(int i=0;i<numOfValue;++i) {
       newvalue[i]=value[i];
       if(i<numOfValue-1) newtime[i]=time[i]; else newtime[i]=0;
@@ -106,7 +119,7 @@ String TimedValue::contentToString() {
 	return ret;
 }
 
-void TimedValue::read(int& result) {
+void TimedValue::read(byte& result) {
 	if(stringType) {
 		if(string=="!") {
 			if(result>0) result=0;
@@ -122,6 +135,10 @@ void TimedValue::read(int& result) {
 		return;
 	}
 	result=value[nextvalue];
+	if (numOfValue == 1) {
+		nextvalue++;
+		return;
+	}
 	unsigned long now=millis();
 	if (now<lastRead) lastRead = now;
 	if (lastRead + time[nextvalue] <= now) {
@@ -191,8 +208,8 @@ boolean TimedValue::SDLoad(File& f, String& error) {
 	byte n=1;
 	for (byte i = 0; i < str.length(); ++i) if (str[i] == ',') n++;
 	this->numOfValue = n;
-	if (numOfValue>0) value = new int[numOfValue];
-	if (numOfValue>1) time = new int[numOfValue - 1];
+	if (numOfValue>0) value = new byte[numOfValue];
+	if (numOfValue>1) time = new unsigned short[numOfValue - 1];
 	String s;
 	for (byte i = 0, j = 0; j<str.length(); ++i, ++j) {
 		s = "";
@@ -253,14 +270,15 @@ void G_IOBase::SDSave(File f,byte tabs) {
 G_Variable::G_Variable(byte idx) : G_IOBase(idx) {
 	scale = 0;
 	hexaPrint = 0xff;
+	preemptive = false;
 }
 
 G_Variable::~G_Variable() {
 }
 
-void G_Variable::setup() {
-	value = 0;
-	newvalue = 0;
+void G_Variable::setup(int v) {
+	value = v;
+	newvalue = v;
 }
 
 void G_Variable::print(String& result,String ident) {
@@ -294,7 +312,11 @@ void G_Variable::read() {
 }
 
 void G_Variable::set(TimedValue* tv) {
-	comingValue.append(*tv);
+	if (preemptive) { 
+		comingValue.set(*tv); 
+	} else {
+		comingValue.append(*tv);
+	}
 }
 
 String G_Variable::valueToString() {
@@ -317,13 +339,36 @@ String G_Variable::valueToString() {
 }
 
 void G_Variable::SDSave(File f,byte tabs) {
+//todo add preemptive
 	G_IOBase::SDSave(f,tabs);
 	f.print(",\n");
 }
 
 boolean G_Variable::SDLoad(File& f, String& error) {
+	int defaultValue=0;
+
+	String str = "";
+	for (char c = f.read(); f.available() && c != '\"'; c = f.read());
+	if (!f.available()) return true;
+	for (char c = f.read(); f.available() && c != '\"'; c = f.read()) str += c;
+	if (str != F("preemptive")) { error = F("Invalid I/O description: >\""); error += str; error += F("\" insdead of \"preemptive\""); return false; }
+	str = "";
+	char cc;
+	for (cc = f.read(); f.available() && (cc != '}' && cc != ','); cc = f.read()) if (IsNumber(cc)) str += cc;
+	preemptive = (boolean)str.toInt();
+	if (cc == ',') {
+		str = "";
+		for (char c = f.read(); f.available() && c != '\"'; c = f.read());
+		if (!f.available()) return true;
+		for (char c = f.read(); f.available() && c != '\"'; c = f.read()) str += c;
+		if (str != F("default")) { error = F("Invalid I/O description: >\""); error += str; error += F("\" insdead of \"default\""); return false; }
+		str = "";
+		for (char c = f.read(); f.available() && c != '}'; c = f.read()) if (IsNumber(c)) str += c;
+		defaultValue = (int)str.toInt();
+	}
+
 	gSensors.variables.add(this);
-	setup();
+	setup(defaultValue);
 	return true;
 }
 
@@ -471,7 +516,7 @@ void G_AnalogActuator::set(TimedValue* tv) {
 
 void G_AnalogActuator::write() {
 	change = false;
-	int out=value;
+	byte out=value;
 	outputvalue.read(out);
 	if((unsigned short)out!=value) {
 		value=(unsigned short)out;
@@ -513,10 +558,10 @@ boolean G_AnalogActuator::SDLoad(File& f, String& error) {
 G_DigitalActuator::G_DigitalActuator(byte idx) : G_IOBase(idx) {
 };
 
-void G_DigitalActuator::setup() {
-	value = 0;
-	//setup
+void G_DigitalActuator::setup(boolean v) {
+	value = v;
 	pinMode(pin, OUTPUT);
+	digitalWrite(pin, value);
 }
 
 void G_DigitalActuator::print(String& result,String ident) {
@@ -534,7 +579,7 @@ void G_DigitalActuator::set(TimedValue* tv) {
 
 void G_DigitalActuator::write() {
 	change = false;
-	int out=value;
+	byte out=value;
 	outputvalue.read(out);
 	if((boolean)out!=value) {
 		value=(boolean)out;
@@ -556,20 +601,34 @@ void G_DigitalActuator::SDSave(File f,byte tabs) {
 	f.print("\"pin\" : ");
 	f.print(pin);
 	f.print("\n");
+	//no default value
 }
 
 boolean G_DigitalActuator::SDLoad(File& f, String& error) {
+	boolean defaultValue = 0;
 	String str = "";
 	for (char c = f.read(); f.available() && c != '\"'; c = f.read());
 	if (!f.available()) return true;
 	for (char c = f.read(); f.available() && c != '\"'; c = f.read()) str += c;
 	if (str != F("pin")) { error = F("Invalid I/O description: >\""); error += str; error += F("\" insdead of \"pin\""); return false; }
 	str = "";
-	for (char c = f.read(); f.available() && c != '}'; c = f.read()) if (IsNumber(c)) str += c;
+	char cc;
+	for (cc = f.read(); f.available() && (cc != '}' && cc!=','); cc = f.read()) if (IsNumber(cc)) str += cc;
 	byte pinid = (byte)str.toInt();
 	this->pin = pinid;
+	if (cc == ',') {
+		str = "";
+		for (char c = f.read(); f.available() && c != '\"'; c = f.read());
+		if (!f.available()) return true;
+		for (char c = f.read(); f.available() && c != '\"'; c = f.read()) str += c;
+		if (str != F("default")) { error = F("Invalid I/O description: >\""); error += str; error += F("\" insdead of \"default\""); return false; }
+		str = "";
+		for (char c = f.read(); f.available() && c != '}'; c = f.read()) if (IsNumber(c)) str += c;
+		defaultValue = (boolean)str.toInt();
+	}
+
 	gActuators.digitalactuators.add(this);
-	setup();
+	setup(defaultValue);
 	return true;
 }
 // -----------RFID-----------
@@ -689,7 +748,7 @@ void G_RFID::authorize() {
 
 String G_RFID::setAuthorization(String serial4, byte sector, String key6, String content16) {
 	unsigned int pos = eeprom.getFreeAuthzRecord();
-	if (pos == -1) return F("No place for new card.");
+	if (pos == (unsigned int)(-1)) return F("No place for new card.");
 	eeprom.WriteByte(pos, 0x11);
 	eeprom.WriteString(pos, serial4);
 	eeprom.WriteByte(pos, sector);
@@ -1175,14 +1234,40 @@ boolean G_I2CLCD::SDLoad(File& f, String& error) {
 G_Clock::G_Clock(byte idx) : G_IOBase(idx) {
 };
 
-void G_Clock::setup(unsigned int y, byte m, byte d, byte h, byte mi, byte s) {
+void G_Clock::setup(String str) {
 	lastTick = millis();
-	second = s;
-	minute = mi;
-	hour = h;
-	day = d;
-	month = m;
-	year = y;
+	year = 0, month = 0, day = 0, hour = 0, minute=0, second=0;
+	setFromString(str);
+}
+
+void G_Clock::set(TimedValue* tv) {
+	if (!tv->stringType) return;
+	this->setFromString(tv->string);
+}
+
+boolean G_Clock::setFromString(String inStr) {
+	if (inStr == "" || inStr.length() == 0) return false;
+	unsigned short i = 0;
+		String str = "";
+		for (; i < inStr.length() && inStr[i] != '-'; ++i) str += inStr[i];
+		year = (unsigned int)str.toInt();
+		str="";
+		for (++i; i < inStr.length() && inStr[i] != '-'; ++i) str += inStr[i];
+		month = (byte)str.toInt();
+		str = "";
+		for (++i; i < inStr.length() && inStr[i] != '|'; ++i) str += inStr[i];
+		day = (byte)str.toInt();
+		str = "";
+		for (++i; i < inStr.length() && inStr[i] != ':'; ++i) str += inStr[i];
+		hour = (byte)str.toInt();
+		str = "";
+		for (++i; i < inStr.length() && inStr[i] != ':'; ++i) str += inStr[i];
+		minute = (byte)str.toInt();
+		str = "";
+		for (++i; i < inStr.length(); ++i) str += inStr[i];
+		second = (byte)str.toInt();
+
+		return true;
 }
 
 void G_Clock::print(String& result, String ident) {
@@ -1217,7 +1302,7 @@ void G_Clock::read() {
 				if (hour > 23) {
 					day++;
 					hour = 0;
-					if ((month == 1 || month == 3 || month == 5 || month == 7 || month == 8 || month == 10 || month == 12) && day>31 || (month==4||month==6||month==9||month==11) && day>30 || (month==2)&& year%4==0 && day>29 || (month==2) && day>28) {
+					if (((month == 1 || month == 3 || month == 5 || month == 7 || month == 8 || month == 10 || month == 12) && day>31) || ((month==4||month==6||month==9||month==11) && day>30) || ((month==2)&& year%4==0 && day>29) || ((month==2) && day>28)) {
 						month++;
 						day = 1;
 						if (month > 12) {
@@ -1233,7 +1318,10 @@ void G_Clock::read() {
 
 String G_Clock::valueToString() {
 	String str;
-/*	str += year;
+	if (year < 1000) str += '0';
+	if (year < 100) str += '0';
+	if (year < 10) str += '0';
+	str += year;
 	str += '-';
 	if (month < 10) str += '0';
 	str += month;
@@ -1241,7 +1329,7 @@ String G_Clock::valueToString() {
 	if (day < 10) str += '0';
 	str += day;
 	str += ' ';
-	*/
+	
 	if (hour < 10) str += '0';
 	str += hour;
 	str += ':';
@@ -1259,10 +1347,332 @@ void G_Clock::SDSave(File f,byte tabs) {
 }
 
 boolean G_Clock::SDLoad(File& f, String& error) {
+	String str = "";
+	char cc;
+	for (cc = f.read(); f.available() && (cc != '}' && cc != ','); cc = f.read());
+	if (cc == ',') {
+		str = "";
+		for (char c = f.read(); f.available() && c != '\"'; c = f.read());
+		if (!f.available()) return true;
+		for (char c = f.read(); f.available() && c != '\"'; c = f.read()) str += c;
+		if (str != F("default")) { error = F("Invalid I/O description: >\""); error += str; error += F("\" insdead of \"default\""); return false; }
+		for (char c = f.read(); f.available() && c != '\"'; c = f.read());
+		if (!f.available()) return true;
+		str = "";
+		for (char c = f.read(); f.available() && c != '\"'; c = f.read()) str += c;
+	}
+
 	gSensors.clocks.add(this);
+	setup(str);
+	return true;
+}
+
+// -----------Shutter-----------
+G_Shutter::G_Shutter(byte idx) : G_IOBase(idx) {
+}
+
+void G_Shutter::setup() {
+	v.selected = 0;
+	v.longRun = 0;
+
+	pinMode(selectorButtonPin, INPUT);
+	v.selectorButtonValue = 0;
+	v.selectorButtonNewValue = 0;
+	pinMode(upButtonPin, INPUT);
+	v.upButtonValue = 0;
+	v.upButtonNewValue = 0;
+	pinMode(downButtonPin, INPUT);
+	v.downButtonValue = 0;
+	v.downButtonNewValue = 0;
+	pinMode(centerButtonPin, INPUT);
+	v.centerButtonValue = 0;
+	v.centerButtonNewValue = 0;
+
+
+	pinMode(selectorLedPin, OUTPUT);
+	digitalWrite(selectorLedPin, v.selected);
+	pinMode(upRelayPin, OUTPUT);
+	v.upRelayValue = 1 - v.relayTriggerValue;
+	v.downRelayValue = 1 - v.relayTriggerValue;
+	digitalWrite(upRelayPin, v.upRelayValue);
+	pinMode(downRelayPin, OUTPUT);
+	digitalWrite(downRelayPin, v.downRelayValue);
+
+
+}
+
+void G_Shutter::print(String& result, String ident) {
+	result += "upRelayPin ";
+	result += String(upRelayPin);
+	result += " downRelayPin ";
+	result += String(downRelayPin);
+	result += " upButtonPin ";
+	result += String(upButtonPin);
+	result += " downButtonPin ";
+	result += String(downButtonPin);
+	result += " centerButtonPin ";
+	result += String(centerButtonPin);
+	result += " selectorPin ";
+	result += String(selectorButtonPin);
+	result += " ledPin ";
+	result += String(selectorLedPin);
+	result += " relayTrigger ";
+	result += String(v.relayTriggerValue);
+	result += " longRun ";
+	result += String(longRun);
+}
+
+String G_Shutter::contentToString() {
+	return "upRelayPin " + String(upRelayPin) +
+	" downRelayPin " + String(downRelayPin) +
+	" upButtonPin " + String(upButtonPin) +
+	" downButtonPin " + String(downButtonPin) +
+	" centerButtonPin " + String(centerButtonPin) +
+	" selectorPin " + String(selectorButtonPin) +
+	" ledPin " + String(selectorLedPin) +
+	" relayTrigger " + String(v.relayTriggerValue) +
+	" longRun " + String(longRun);
+}
+
+void G_Shutter::read() {
+	change = false;
+	v.centerButtonValue = v.centerButtonNewValue;
+	v.centerButtonNewValue = digitalRead(centerButtonPin);
+	v.downButtonValue = v.downButtonNewValue;
+	v.downButtonNewValue = digitalRead(downButtonPin);
+	v.upButtonValue = v.upButtonNewValue;
+	v.upButtonNewValue = digitalRead(upButtonPin);
+	v.selectorButtonValue = v.selectorButtonNewValue;
+	v.selectorButtonNewValue = digitalRead(selectorButtonPin);
+	if (v.centerButtonValue != v.centerButtonNewValue ||
+		v.downButtonValue!=v.downButtonNewValue ||
+		v.upButtonValue!=v.upButtonNewValue ||
+		v.selectorButtonValue!=v.selectorButtonNewValue
+		) change = true;
+
+	if (v.selectorButtonValue && !v.selectorButtonNewValue) { 
+		v.selected = 1-v.selected; 
+		digitalWrite(selectorLedPin, v.selected);
+		
+		if (!v.selected) {
+			TimedValue t(0);
+			controlInput.set(t);
+			v.longRun = 0;
+			Serial.println("stop");
+		}
+	}
+	if (!v.selected) return;
+	if (v.upButtonValue && !v.upButtonNewValue && v.centerButtonNewValue && v.downButtonNewValue) {
+		v.longRun = 0;
+		TimedValue t(1);
+		controlInput.set(t);
+		Serial.println("fel");
+		return;
+	}
+	if (v.upButtonValue && !v.upButtonNewValue && !v.centerButtonNewValue) {
+		v.longRun = 1;
+		TimedValue t(1, longRun*1000, 0);
+		controlInput.set(t);
+		Serial.println("longfel");
+		return;
+	}
+	if (!v.upButtonValue && v.upButtonNewValue && v.centerButtonNewValue && controlValue == 1 && !v.longRun) {
+		v.longRun = 0;
+		TimedValue t(0);
+		controlInput.set(t);
+		Serial.println("stopfel");
+		return;
+	}
+	if (v.downButtonValue && !v.downButtonNewValue && v.centerButtonNewValue && v.upButtonNewValue) {
+		v.longRun = 0;
+		TimedValue t(2);
+		controlInput.set(t);
+		String str;
+		controlInput.print(str);
+		Serial.println(str);
+		Serial.println("le");
+		return;
+	}
+	if (v.downButtonValue && !v.downButtonNewValue && !v.centerButtonNewValue) {
+		v.longRun = 1;
+		TimedValue t(2, longRun * 1000, 0);
+		controlInput.set(t);
+		String str;
+		controlInput.print(str);
+		Serial.println(str);
+		Serial.println("longle");
+		return;
+	}
+	if (!v.downButtonValue && v.downButtonNewValue && v.centerButtonNewValue && controlValue == 2 && !v.longRun) {
+		v.longRun = 0;
+		TimedValue t(0);
+		controlInput.set(t);
+		Serial.println("stople");
+		return;
+	}
+	if (v.centerButtonValue && !v.centerButtonNewValue && v.downButtonNewValue && v.upButtonNewValue) {
+		v.longRun = 0;
+		TimedValue t(0);
+		controlInput.set(t);
+		Serial.println("stopcenter");
+		return;
+	}
+	if (v.centerButtonValue && !v.centerButtonNewValue && !v.downButtonNewValue) {
+		v.longRun = 1;
+		TimedValue t(2, longRun * 1000, 0);
+		controlInput.set(t);
+		Serial.println("longle2");
+		return;
+	}
+	if (v.centerButtonValue && !v.centerButtonNewValue && !v.upButtonNewValue) {
+		v.longRun = 1;
+		TimedValue t(1, longRun * 1000, 0);
+		controlInput.set(t);
+		Serial.println("longfel2");
+		return;
+	}
+}
+
+void G_Shutter::set(TimedValue* tv) {
+	controlInput.set(*tv);
+}
+
+void G_Shutter::write() {
+	change = false;
+	byte out = controlValue;
+	controlInput.read(out);
+	if (out != controlValue) {
+		controlValue = out;
+		switch (controlValue) {
+		case 1:
+			digitalWrite(upRelayPin, v.relayTriggerValue);
+			digitalWrite(downRelayPin, 1 - v.relayTriggerValue);
+			break;
+		case 2:
+			digitalWrite(upRelayPin, 1 - v.relayTriggerValue);
+			digitalWrite(downRelayPin, v.relayTriggerValue);
+			break;
+		default:
+			digitalWrite(upRelayPin, 1 - v.relayTriggerValue);
+			digitalWrite(downRelayPin, 1 - v.relayTriggerValue);
+			break;
+		}
+		change = true;
+	}
+}
+
+String G_Shutter::valueToString() {
+	String str = "";
+	if (controlValue == 0) str += F("ALL");
+	if (controlValue == 1) str += F("FEL");
+	if (controlValue == 2) str += F("LE");
+	return str;
+}
+
+void G_Shutter::SDSave(File f, byte tabs) {
+	//todo 
+	G_IOBase::SDSave(f, tabs);
+	f.print(",\n");
+}
+
+boolean G_Shutter::SDLoad(File& f, String& error) {
+	Serial.println(sizeof(G_Shutter));
+	String str = "";
+	for (char c = f.read(); f.available() && c != '\"'; c = f.read());
+	if (!f.available()) return true;
+	for (char c = f.read(); f.available() && c != '\"'; c = f.read()) str += c;
+	Serial.println(str);
+	if (str != F("selectorButtonPin")) { error = F("Invalid rfid I/O description: >\""); error += str; error += F("\" insdead of \"selectorButtonPin\""); return false; }
+	str = "";
+	for (char c = f.read(); f.available() && c != ','; c = f.read()) if (IsNumber(c)) str += c;
+	Serial.println(str);
+	this->selectorButtonPin = (byte)str.toInt();
+	str = "";
+	for (char c = f.read(); f.available() && c != '\"'; c = f.read());
+	if (!f.available()) return true;
+	for (char c = f.read(); f.available() && c != '\"'; c = f.read()) str += c;
+	Serial.println(str);
+	if (str != F("selectorLedPin")) { error = F("Invalid rfid I/O description: >\""); error += str; error += F("\" insdead of \"selectorLedPin\""); return false; }
+	str = "";
+	for (char c = f.read(); f.available() && c != ','; c = f.read()) if (IsNumber(c)) str += c;
+	Serial.println(str);
+	this->selectorLedPin = (byte)str.toInt();
+	str = "";
+	for (char c = f.read(); f.available() && c != '\"'; c = f.read());
+	if (!f.available()) return true;
+	for (char c = f.read(); f.available() && c != '\"'; c = f.read()) str += c;
+	Serial.println(str);
+	if (str != F("upButtonPin")) { error = F("Invalid rfid I/O description: >\""); error += str; error += F("\" insdead of \"upButtonPin\""); return false; }
+	str = "";
+	for (char c = f.read(); f.available() && c != ','; c = f.read()) if (IsNumber(c)) str += c;
+	Serial.println(str);
+	this->upButtonPin = (byte)str.toInt();
+	str = "";
+	for (char c = f.read(); f.available() && c != '\"'; c = f.read());
+	if (!f.available()) return true;
+	for (char c = f.read(); f.available() && c != '\"'; c = f.read()) str += c;
+	Serial.println(str);
+	if (str != F("downButtonPin")) { error = F("Invalid rfid I/O description: >\""); error += str; error += F("\" insdead of \"downButtonPin\""); return false; }
+	str = "";
+	for (char c = f.read(); f.available() && c != ','; c = f.read()) if (IsNumber(c)) str += c;
+	Serial.println(str);
+	this->downButtonPin = (byte)str.toInt();
+	str = "";
+	for (char c = f.read(); f.available() && c != '\"'; c = f.read());
+	if (!f.available()) return true;
+	for (char c = f.read(); f.available() && c != '\"'; c = f.read()) str += c;
+	Serial.println(str);
+	if (str != F("centerButtonPin")) { error = F("Invalid rfid I/O description: >\""); error += str; error += F("\" insdead of \"centerButtonPin\""); return false; }
+	str = "";
+	for (char c = f.read(); f.available() && c != ','; c = f.read()) if (IsNumber(c)) str += c;
+	Serial.println(str);
+	this->centerButtonPin = (byte)str.toInt();
+	str = "";
+	for (char c = f.read(); f.available() && c != '\"'; c = f.read());
+	if (!f.available()) return true;
+	for (char c = f.read(); f.available() && c != '\"'; c = f.read()) str += c;
+	Serial.println(str);
+	if (str != F("upRelayPin")) { error = F("Invalid rfid I/O description: >\""); error += str; error += F("\" insdead of \"upRelayPin\""); return false; }
+	str = "";
+	for (char c = f.read(); f.available() && c != ','; c = f.read()) if (IsNumber(c)) str += c;
+	Serial.println(str);
+	this->upRelayPin = (byte)str.toInt();
+	str = "";
+	for (char c = f.read(); f.available() && c != '\"'; c = f.read());
+	if (!f.available()) return true;
+	for (char c = f.read(); f.available() && c != '\"'; c = f.read()) str += c;
+	Serial.println(str);
+	if (str != F("downRelayPin")) { error = F("Invalid rfid I/O description: >\""); error += str; error += F("\" insdead of \"downRelayPin\""); return false; }
+	str = "";
+	for (char c = f.read(); f.available() && c != ','; c = f.read()) if (IsNumber(c)) str += c;
+	Serial.println(str);
+	this->downRelayPin = (byte)str.toInt();
+	str = "";
+	for (char c = f.read(); f.available() && c != '\"'; c = f.read());
+	if (!f.available()) return true;
+	for (char c = f.read(); f.available() && c != '\"'; c = f.read()) str += c;
+	Serial.println(str);
+	if (str != F("relayTrigger")) { error = F("Invalid rfid I/O description: >\""); error += str; error += F("\" insdead of \"relayTrigger\""); return false; }
+	str = "";
+	for (char c = f.read(); f.available() && c != ','; c = f.read()) if (IsNumber(c)) str += c;
+	Serial.println(str);
+	this->v.relayTriggerValue = (byte)str.toInt();
+	str = "";
+	for (char c = f.read(); f.available() && c != '\"'; c = f.read());
+	if (!f.available()) return true;
+	for (char c = f.read(); f.available() && c != '\"'; c = f.read()) str += c;
+	Serial.println(str);
+	if (str != F("fullMove")) { error = F("Invalid rfid I/O description: >\""); error += str; error += F("\" insdead of \"fullMove\""); return false; }
+	str = "";
+	for (char c = f.read(); f.available() && c != '}'; c = f.read()) if (IsNumber(c)) str += c;
+	Serial.println(str);
+	this->longRun = (unsigned)str.toInt();
+
+	gSensors.shutters.add(this);
 	setup();
 	return true;
 }
+
 
 // -----------Name-------------
 G_Name::G_Name() : G_IOBase() {
@@ -1444,12 +1854,17 @@ G_Trigger::G_Trigger() : G_IOBase() {
 	conditions=0;
 	nCondition=0;
 	timed=false;
-	triggeredEvent=0xff;
-	triggeredValue=0;
+	triggered = NULL;
+	nTriggered = 0;
 }
+
+//triggeredEvent = 0xff;
+//triggeredValue = 0;
+
 
 G_Trigger::~G_Trigger() {
 	if(conditions) delete [] conditions;
+	if (triggered) delete[] triggered;
 }
 
 void G_Trigger::addCondition(G_Condition* cond) {
@@ -1464,6 +1879,18 @@ void G_Trigger::addCondition(G_Condition* cond) {
 	this->conditions = newList;
 }
 
+void G_Trigger::addTriggered(Triggered* trig) {
+	Triggered** newList = new Triggered*[this->nTriggered + 1];
+	int i;
+	for (i = 0; i < this->nTriggered; ++i) {
+		newList[i] = this->triggered[i];
+	}
+	newList[i] = trig;
+	this->nTriggered++;
+	if (triggered) delete[] this->triggered;
+	this->triggered = newList;
+}
+
 boolean G_Trigger::anyChange() {
 	for(int i=0;i<nCondition;++i) {
 		if(conditions[i]->hasChange()) return true;
@@ -1474,7 +1901,7 @@ boolean G_Trigger::anyChange() {
 String G_Trigger::contentToString() {
 	String ret;
 	print(ret);
-	return ret;
+	return *(&ret);
 }
 
 void G_Trigger::print(String& result,String ident) {
@@ -1490,13 +1917,19 @@ void G_Trigger::print(String& result,String ident) {
 		}
 	}
 	result+=F(" apply ");
-	G_Name* name=(G_Name*)gNames.find(triggeredActuator);
-	if(name) { name->print(result); result+=" "; }
-	if(triggeredEvent!=0xff) {
-		G_Name* eventname=(G_Name*)gNames.find(triggeredEvent);
-		if(eventname) eventname->print(result);
-	} else if(triggeredValue) {
-		triggeredValue->print(result);
+	for (unsigned short i = 0; i < nTriggered; ++i) {
+		if (i > 0) {
+			result += F(" & ");
+		}
+		G_Name* name = (G_Name*)gNames.find(this->triggered[i]->actuator);
+		if (name) { name->print(result); result += " "; }
+		if (this->triggered[i]->event != 0xff) {
+			G_Name* eventname = (G_Name*)gNames.find(this->triggered[i]->event);
+			if (eventname) eventname->print(result);
+		}
+		else if (this->triggered[i]->value) {
+			this->triggered[i]->value->print(result);
+		}
 	}
 }
 
@@ -1519,13 +1952,16 @@ void G_Trigger::trigger() {
 }
 
 void G_Trigger::fire() {
-	if(triggeredEvent!=0xff) {
-		G_Event* event=((G_Event*)gEvents.list.find(triggeredEvent));
-		if(event==0) return;
-		gActuators.set(triggeredActuator,&event->value);
-	} else if(triggeredValue) {
-		gActuators.set(triggeredActuator,triggeredValue);
-	}	
+	for (unsigned short i = 0; i < nTriggered; ++i) {
+		if (this->triggered[i]->event != 0xff) {
+			G_Event* event = ((G_Event*)gEvents.list.find(this->triggered[i]->event));
+			if (event == 0) return;
+			gActuators.set(this->triggered[i]->actuator, &event->value);
+		}
+		else if (this->triggered[i]->value) {
+			gActuators.set(this->triggered[i]->actuator, this->triggered[i]->value);
+		}
+	}
 }
 
 void G_Trigger::SDSave(File f,byte tabs) {
@@ -1544,24 +1980,38 @@ void G_Trigger::SDSave(File f,byte tabs) {
 			tabs--;
 		for(int i=0;i<tabs;++i) f.print("\t"); f.print("],\n");
 		tabs--;
-	for(int i=0;i<tabs;++i) f.print("\t"); f.print("\"triggered actuator\" : \"");
-	f.print(((G_Name*)gNames.find(triggeredActuator))->name);
-	f.print("\",\n");
-	if(triggeredEvent<0xff) {
-		for(int i=0;i<tabs;++i) f.print("\t"); f.print("\"triggered event\" : \"");
-		f.print(((G_Name*)gNames.find(triggeredEvent))->name);
-		f.print("\"\n");
-	}
-	if(triggeredValue) {
-		for(int i=0;i<tabs;++i) f.print("\t"); f.print("\"triggered value\" :\n");
+	for (int i = 0; i<tabs; ++i) f.print("\t"); f.print("\"triggers\" :\n");
 		tabs++;
-			for(int i=0;i<tabs;++i) f.print("\t"); f.print("{\n");
+		for (int i = 0; i<tabs; ++i) f.print("\t"); f.print("[\n");
+		tabs++;
+		for (int x = 0; x<nTriggered; ++x) {
+			for (int i = 0; i<tabs; ++i) f.print("\t"); f.print("{\n");
 			tabs++;
-				triggeredValue->SDSave(f,tabs);
+				for (int i = 0; i < tabs; ++i) f.print("\t"); f.print("\"actuator\" : \"");
+				f.print(((G_Name*)gNames.find(this->triggered[x]->actuator))->name);
+				f.print("\",\n");
+				if (this->triggered[x]->event < 0xff) {
+					for (int i = 0; i < tabs; ++i) f.print("\t"); f.print("\"event\" : \"");
+					f.print(((G_Name*)gNames.find(this->triggered[x]->event))->name);
+					f.print("\"\n");
+				}
+				if (this->triggered[x]->value) {
+					for (int i = 0; i < tabs; ++i) f.print("\t"); f.print("\"value\" :\n");
+					tabs++;
+					for (int i = 0; i < tabs; ++i) f.print("\t"); f.print("{\n");
+					tabs++;
+					this->triggered[x]->value->SDSave(f, tabs);
+					tabs--;
+					for (int i = 0; i < tabs; ++i) f.print("\t"); f.print("}\n");
+					tabs--;
+				}
 			tabs--;
-			for(int i=0;i<tabs;++i) f.print("\t"); f.print("}\n");
+			for (int i = 0; i<tabs; ++i) f.print("\t"); f.print("}");
+			if (x<nTriggered - 1) f.print(",\n"); else f.print("\n");
+		}
 		tabs--;
-	}
+		for (int i = 0; i<tabs; ++i) f.print("\t"); f.print("]\n");
+		tabs--;
 }
 
 boolean G_Trigger::SDLoad(File& f, String& error) {
@@ -1589,40 +2039,55 @@ boolean G_Trigger::SDLoad(File& f, String& error) {
 			if (end) break;
 		}
 	}
+	for (char c = f.read(); f.available() && c != '['; c = f.read());
+	for (boolean end = false;;) {
+		Triggered* trig = new Triggered();
+		
 
-	str = "";
-	for (char c = f.read(); f.available() && c != '\"'; c = f.read());
-	if (!f.available()) return true;
-	for (char c = f.read(); f.available() && c != '\"'; c = f.read()) str += c;
-	if (str != F("triggered actuator")) { error = F("Invalid trigger I/O description: >\""); error += str; error += F("\" insdead of \"triggered actuator\""); return false; }
-	str = "";
-	for (char c = f.read(); f.available() && c != '\"'; c = f.read());
-	if (!f.available()) return false;
-	for (char c = f.read(); f.available() && c != '\"'; c = f.read()) str += c;
-	G_IOBase* n;
-	if (!(n = gNames.find(str)) || !gActuators.find(n->index)) { error += str; error = F(" is not existing actuator in a trigger.\""); return false; }
-	triggeredActuator = n->index;
-
-	str = "";
-	for (char c = f.read(); f.available() && c != '\"'; c = f.read());
-	if (!f.available()) return true;
-	for (char c = f.read(); f.available() && c != '\"'; c = f.read()) str += c;
-	if (str != F("triggered event") && str != F("triggered value")) {error = F("Invalid trigger I/O description: >\""); error += str; error += F("\" insdead of \"triggered value\" or \"triggered event\""); return false;}
-	if (str == F("triggered value")) {
-		triggeredEvent = 0xff;
-		triggeredValue = new TimedValue();
-		if (!triggeredValue->SDLoad(f, error)) return false;
-		for (char c = f.read(); f.available() && c != '}'; c = f.read());
-	}
-	else {
+		str = "";
+		for (char c = f.read(); f.available() && c != '\"'; c = f.read());
+		if (!f.available()) return true;
+		for (char c = f.read(); f.available() && c != '\"'; c = f.read()) str += c;
+		if (str != F("actuator")) { error = F("Invalid trigger I/O description: >\""); error += str; error += F("\" insdead of \"actuator\""); return false; }
 		str = "";
 		for (char c = f.read(); f.available() && c != '\"'; c = f.read());
 		if (!f.available()) return false;
 		for (char c = f.read(); f.available() && c != '\"'; c = f.read()) str += c;
 		G_IOBase* n;
-		if (!(n = gNames.find(str)) || !gEvents.list.find(n->index)) { error += str; error = F(" is not existing event in a trigger.\""); return false; }
-		triggeredEvent = n->index;
+		if (!(n = gNames.find(str)) || !gActuators.find(n->index)) { error += str; error = F(" is not existing actuator in a trigger.\""); return false; }
+		trig->actuator = n->index;
+
+		str = "";
+		for (char c = f.read(); f.available() && c != '\"'; c = f.read());
+		if (!f.available()) return true;
+		for (char c = f.read(); f.available() && c != '\"'; c = f.read()) str += c;
+		if (str != F("event") && str != F("value")) { error = F("Invalid trigger I/O description: >\""); error += str; error += F("\" insdead of \"value\" or \"event\""); return false; }
+		if (str == F("value")) {
+			trig->event = 0xff;
+			trig->value = new TimedValue();
+			if (!trig->value->SDLoad(f, error)) return false;
+			for (char c = f.read(); f.available() && c != '}'; c = f.read());
+		}
+		else {
+			str = "";
+			for (char c = f.read(); f.available() && c != '\"'; c = f.read());
+			if (!f.available()) return false;
+			for (char c = f.read(); f.available() && c != '\"'; c = f.read()) str += c;
+			G_IOBase* n;
+			if (!(n = gNames.find(str)) || !gEvents.list.find(n->index)) { error += str; error = F(" is not existing event in a trigger.\""); return false; }
+			trig->event = n->index;
+		}
+
+		if (error!="") {
+			delete trig; return false;
+		}
+		this->addTriggered(trig);
+		char c;
+		for (c = f.read(); f.available() && c != ']' && c != ','; c = f.read());
+		if (c == ']') end = true;
+		if (end) break;
 	}
+
 
 	for (char c = f.read(); f.available() && c != '}'; c = f.read());
 	gTriggers.list.add(this);
@@ -1717,13 +2182,14 @@ byte G_IOList::findplace(byte idx) {
 void G_IOList::print(String& result) {
 	for(int i=0;i<this->listSize;++i) {
 		this->list[i]->print(result);
-		result+="\n";
+		result+="\r\n";
 	}
 }
 
-void G_IOList::printWname(String& result,boolean printname) {
+void G_IOList::printWname(String& result, String ident, boolean printname) {
 	for(int i=0;i<this->listSize;++i) {
-		result+="(";
+		result += ident;
+		result += "(";
 		result+=this->list[i]->index;
 		result+=") ";
 		if(printname) {
@@ -1731,7 +2197,7 @@ void G_IOList::printWname(String& result,boolean printname) {
 			if(name) { name->print(result); result+=" "; }
 		}
 		this->list[i]->print(result);
-		result+="\n";
+		result+="\r\n";
 	}
 }
 
@@ -1746,7 +2212,7 @@ void G_IOList::toStringWname(String& result,String ident,boolean printname) {
 			if(name) { name->print(result); result+=" "; }
 		}
 		result+=this->list[i]->contentToString();
-		result+="\n";
+		result+="\r\n";
 	}
 }
 
@@ -1765,7 +2231,7 @@ boolean G_IOList::SDLoad(File& f, String& error, String iotypename) {
 	byte nameidx = 0xff;
 	boolean end = false;
 	for (;;) {
-		if (iotypename == F("variable") || iotypename == F("analog") || iotypename == F("digital") || iotypename == F("rfid") || iotypename == F("dht") || iotypename == F("4x4 keypad") || iotypename == F("clock") || iotypename == F("analogA") || iotypename == F("digitalA") || iotypename == F("i2c lcdA") || iotypename == F("events")) {
+		if (iotypename == F("variable") || iotypename == F("analog") || iotypename == F("digital") || iotypename == F("rfid") || iotypename == F("dht") || iotypename == F("4x4 keypad") || iotypename == F("clock") || iotypename == F("analogA") || iotypename == F("digitalA") || iotypename == F("i2c lcdA") || iotypename == F("events") || iotypename == F("shutter")) {
 			G_Name* name = new G_Name();
 			if (!name->SDLoad(f, error, nameidx)) {
 				delete name;
@@ -1796,6 +2262,8 @@ boolean G_IOList::SDLoad(File& f, String& error, String iotypename) {
 				delete sensor;
 				return false;
 			}
+			Serial.println("digital");
+			FREEMEM();
 		}
 		else if (iotypename == F("rfid")) {
 			G_RFID* sensor = new G_RFID(nameidx);
@@ -1803,6 +2271,8 @@ boolean G_IOList::SDLoad(File& f, String& error, String iotypename) {
 				delete sensor;
 				return false;
 			}
+			Serial.println("rfid");
+			FREEMEM();
 		}
 		else if (iotypename == F("dht")) {
 			G_DHTSensor* sensor = new G_DHTSensor(nameidx);
@@ -1810,6 +2280,8 @@ boolean G_IOList::SDLoad(File& f, String& error, String iotypename) {
 				delete sensor;
 				return false;
 			}
+			Serial.println("dht");
+			FREEMEM();
 		}
 		else if (iotypename == F("4x4 keypad")) {
 			G_Keypad4x4* sensor = new G_Keypad4x4(nameidx);
@@ -1824,6 +2296,8 @@ boolean G_IOList::SDLoad(File& f, String& error, String iotypename) {
 				delete sensor;
 				return false;
 			}
+			Serial.println("clock");
+			FREEMEM();
 		}
 		else if (iotypename == F("analogA")) {
 			G_AnalogActuator* sensor = new G_AnalogActuator(nameidx);
@@ -1838,6 +2312,8 @@ boolean G_IOList::SDLoad(File& f, String& error, String iotypename) {
 				delete sensor;
 				return false;
 			}
+			Serial.println("digitalA");
+			FREEMEM();
 		}
 		else if (iotypename == F("i2c lcdA")) {
 			G_I2CLCD* sensor = new G_I2CLCD(nameidx);
@@ -1845,6 +2321,8 @@ boolean G_IOList::SDLoad(File& f, String& error, String iotypename) {
 				delete sensor;
 				return false;
 			}
+			Serial.println("i2c lcdA");
+			FREEMEM();
 		}
 		else if (iotypename == F("events")) {
 			G_Event* sensor = new G_Event(nameidx);
@@ -1852,6 +2330,8 @@ boolean G_IOList::SDLoad(File& f, String& error, String iotypename) {
 				delete sensor;
 				return false;
 			}
+			Serial.println("events");
+			FREEMEM();
 		}
 		else if (iotypename == F("triggers")) {
 			G_Trigger* sensor = new G_Trigger();
@@ -1859,6 +2339,17 @@ boolean G_IOList::SDLoad(File& f, String& error, String iotypename) {
 				delete sensor;
 				return false;
 			}
+			Serial.println("triggers");
+			FREEMEM();
+		}
+		else if (iotypename == F("shutter")) {
+			G_Shutter* sensor = new G_Shutter(nameidx);
+			if (!sensor->SDLoad(f, error)) {
+				delete sensor;
+				return false;
+			}
+			Serial.println("shutter");
+			FREEMEM();
 		}
 		else return false;
 		String r = "";
@@ -1879,6 +2370,7 @@ void G_SensorList::read() {
 	for(int i=0;i<dhts.listSize;++i) dhts.list[i]->read();
 	for(int i=0;i<keypads4x4.listSize;++i) keypads4x4.list[i]->read();
 	for(int i=0;i<clocks.listSize;++i) clocks.list[i]->read();
+	for(int i = 0; i<shutters.listSize; ++i) shutters.list[i]->read();
 }
 
 //obsolete
@@ -1890,6 +2382,7 @@ boolean G_SensorList::hasChange() {
 	for(int i=0;i<dhts.listSize;++i) if(dhts.list[i]->changed()) return true;
 	for(int i=0;i<keypads4x4.listSize;++i) if(keypads4x4.list[i]->changed()) return true;
 	for(int i=0;i<clocks.listSize;++i) if(clocks.list[i]->changed()) return true;
+	for (int i = 0; i < shutters.listSize; ++i) if(shutters.list[i]->changed()) return true;
 	return false;
 }
 
@@ -1902,6 +2395,7 @@ G_IOBase* G_SensorList::find(byte index) {
 	if((g=dhts.find(index))) return g;
 	if((g=keypads4x4.find(index))) return g;
 	if((g=clocks.find(index))) return g;
+	if ((g = shutters.find(index))) return g;
 	return 0;
 }
 
@@ -1966,6 +2460,14 @@ void G_SensorList::SDSave(File f,byte tabs) {
 					tabs--;
 				for(int i=0;i<tabs;++i) f.print("\t"); f.print("]\n");
 				tabs--;
+			for (int i = 0; i<tabs; ++i) f.print("\t"); f.print("\"shutter\" :\n");
+				tabs++;
+				for (int i = 0; i<tabs; ++i) f.print("\t"); f.print("[\n");
+					tabs++;
+					shutters.SDSave(f, tabs);
+					tabs--;
+				for (int i = 0; i<tabs; ++i) f.print("\t"); f.print("]\n");
+				tabs--;
 			tabs--;
 		for(int i=0;i<tabs;++i) f.print("\t"); f.print("}");
 }
@@ -1974,7 +2476,7 @@ boolean G_SensorList::SDLoad(File& f,String& error) {
 	String iotypename="";
 	boolean end = false;
 	boolean ok = true;
-	for(;f.available();) {
+	for (; f.available();) {
 		iotypename = "";
 		for (char c = f.read(); f.available() && c != '\"'; c = f.read());
 		if(!f.available()) break;
@@ -1988,6 +2490,7 @@ boolean G_SensorList::SDLoad(File& f,String& error) {
 		else if (iotypename == F("dht"))		{ if (!(dhts.SDLoad(f, error, iotypename))) { ok = false; break; } }
 		else if (iotypename == F("4x4 keypad"))	{ if (!(keypads4x4.SDLoad(f, error, iotypename))) { ok = false; break; } }
 		else if (iotypename == F("clock"))		{ if (!(clocks.SDLoad(f, error, iotypename))) { ok = false; break; } }
+		else if (iotypename == F("shutter"))	{ if (!(shutters.SDLoad(f, error, iotypename))) { ok = false; break; } }
 		else { error += F("Invalid IO type: \""); error += iotypename; error += F("\"");  return false; }
 		for (char c = f.read(); f.available() && c != ']'; c = f.read());
 		for (char c = f.read(); f.available() && c != ','; c = f.read()) if (c == '}') {
@@ -2011,6 +2514,8 @@ G_IOBase* G_ActuatorList::find(byte index) {
 	if(!found) found=i2clcds.find(index);
 	if(!found) found=gSensors.variables.find(index);
 	if(!found) found=gSensors.rfids.find(index);
+	if (!found) found = gSensors.shutters.find(index);
+	if (!found) found = gSensors.clocks.find(index);
 	return found;
 }
 
@@ -2020,6 +2525,7 @@ void G_ActuatorList::write() {
 	i2clcds.write();
 	gSensors.variables.write();
 	gSensors.rfids.write();
+	gSensors.shutters.write();
 }
 
 void G_ActuatorList::SDSave(File f,byte tabs) {
@@ -2124,52 +2630,60 @@ void PrintAllIO(String& response) {
 	response = "";
 	String ident=F("   ");
 	String str;
-	response+=(F("\nIO LIST:\n"));
-	response += (F("Analog senrors:\n"));
+	response+=(F("\r\nIO LIST:\r\n"));
+	response += (F("Analog senrors:\r\n"));
 	gSensors.analogsensors.toStringWname(str,ident);
 	if (str != "") response += (str);
 	str="";
-	response += (F("Digital senrors:\n"));
+	response += (F("Digital senrors:\r\n"));
 	gSensors.digitalsensors.toStringWname(str,ident);
 	if (str != "") response += (str);
 	str="";
-	response += (F("Analog actuators:\n"));
+	response += (F("Analog actuators:\r\n"));
 	gActuators.analogactuators.toStringWname(str,ident);
 	if (str != "") response += (str);
 	str="";
-	response += (F("Digital actuators:\n"));
+	response += (F("Digital actuators:\r\n"));
 	gActuators.digitalactuators.toStringWname(str,ident);
 	if (str != "") response += (str);
 	str="";
-	response += (F("DHT senrors:\n"));
+	response += (F("DHT senrors:\r\n"));
 	gSensors.dhts.toStringWname(str,ident);
 	if (str != "") response += (str);
 	str="";
-	response += (F("4x4 Keypads:\n"));
+	response += (F("4x4 Keypads:\r\n"));
 	gSensors.keypads4x4.toStringWname(str,ident);
 	if (str != "") response += (str);
 	str="";
-	response += (F("I2C LCDs:\n"));
+	response += (F("I2C LCDs:\r\n"));
 	gActuators.i2clcds.toStringWname(str,ident);
 	if (str != "") response += (str);
 	str="";
-	response += (F("RFIDs:\n"));
+	response += (F("RFIDs:\r\n"));
 	gSensors.rfids.toStringWname(str,ident);
 	if (str != "") response += (str);
 	str="";
-	response += (F("Clocks:\n"));
+	response += (F("Clocks:\r\n"));
 	gSensors.clocks.toStringWname(str,ident);
 	if (str != "") response += (str);
 	str="";
-	response += (F("Variables:\n"));
+	response += (F("Variables:\r\n"));
 	gSensors.variables.toStringWname(str,ident);
 	if (str != "") response += (str);
 	str="";
-	response += (F("\nEVENT LIST:\n"));
+	response += (F("Shutters:\r\n"));
+	gSensors.shutters.toStringWname(str, ident);
+	if (str != "") response += (str);
+	str = "";
+	response += (F("\r\nEVENT LIST:\r\n"));
 	gEvents.list.toStringWname(str,ident);
 	if (str != "") response += (str);
 	str="";
-	response += (F("\nTRIGGER LIST:\n"));
-	gTriggers.list.toStringWname(str,ident,false);
-	if (str != "") response += (str);
+	response += (F("\r\nTRIGGER LIST:\r\n"));
+//	gTriggers.list.toStringWname(response, ident, false);
+	gTriggers.list.printWname(response, ident, false);
+//	if (str != "") response += (str);
+
+	// TODO a fentieket is lecserelni printWname-ra
+	// TODO a tostringwname hivasok veszelyeseek!!! str-t ad vissza. triggernel rossz!
 }

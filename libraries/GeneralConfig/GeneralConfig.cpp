@@ -36,7 +36,7 @@ unsigned long G_Config::mac1() {
 	r <<= 8;
 	r += 190;
 	r <<= 8;
-	r += 239;
+	r += 4;
 	return r;
 }
 
@@ -50,11 +50,11 @@ unsigned int G_Config::mac2() {
 unsigned long G_Config::ip() {
 	unsigned long r = 192;
 	r <<= 8;
-	r += 168;
+	r += 169;
 	r <<= 8;
 	r += 3;
 	r <<= 8;
-	r += 3;
+	r += 2;
 	return r;
 }
 
@@ -67,7 +67,7 @@ unsigned long G_Config::subnet() {
 	r <<= 8;
 	r += 255;
 	r <<= 8;
-	r += 254;
+	r += 0;
 	r <<= 8;
 	r += 0;
 	return r;
@@ -76,9 +76,9 @@ unsigned long G_Config::subnet() {
 unsigned long G_Config::gateway() {
 	unsigned long r = 192;
 	r <<= 8;
-	r += 168;
+	r += 169;
 	r <<= 8;
-	r += 2;
+	r += 0;
 	r <<= 8;
 	r += 1;
 	return r;

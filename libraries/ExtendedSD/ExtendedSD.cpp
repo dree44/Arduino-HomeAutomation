@@ -8,13 +8,13 @@ void ExtendedSD::DetailedCheck(String& response) {
   digitalWrite(4, LOW);
   response += (F("SD card...  "));
   if (!initok) {
-	  response += (F("FAILED.\n"));
+	  response += (F("FAILED.\r\n"));
   } else
   if (!card.init(SPI_HALF_SPEED, SD_CHIP_SELECT_PIN)) {
-	  response += (F("FAILED. - Card initialization failed.\n"));
+	  response += (F("FAILED. - Card initialization failed.\r\n"));
   } else {
     if (!volume.init(card)) {
-		response += (F("FAILED. - Partition initialization failed.\n"));
+		response += (F("FAILED. - Partition initialization failed.\r\n"));
     } else {
       double volumesize;
       volumesize = volume.blocksPerCluster();    // clusters are collections of blocks
@@ -32,7 +32,7 @@ void ExtendedSD::DetailedCheck(String& response) {
 //      Serial.print(freevol);
 //      Serial.print(F(" / ")); 
 	  response += (volumesize);
-	  response += (F(" Gb ]\n"));
+	  response += (F(" Gb ]\r\n"));
       root.openRoot(volume);
 	  root.ls();
     }

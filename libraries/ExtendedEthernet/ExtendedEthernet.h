@@ -7,18 +7,21 @@
 #include <GeneralLog.h>
 #include <SD.h>
 
-
 class ExtendedEthernet {
 	byte mac[6];
 	IPAddress ip;
 	IPAddress gateway;
 	IPAddress subnet;
 	unsigned int localPort;
+	unsigned int serverPort;
 
 	unsigned short udpMaxSegment;
 	char* udpPayload;
+	String fileName;
+	
 public:
 	EthernetUDP Udp;
+	EthernetServer* tcpServer=0;
 	ExtendedEthernet() {
 		udpMaxSegment=0xffff;
 		udpPayload=0;
@@ -30,7 +33,7 @@ public:
 	String PrintMAC();
 	void Receive();
 	void UDPParseStream(String udpStream,String& response);
-	void UDPSendback(String response);
+	void UDPSendback(String& response);
 	void UDPSendbackFile(File& file);
 };
 

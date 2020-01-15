@@ -6,7 +6,7 @@
 String serialInputString = "";
 
 void PrintCommands(String& response) {
-	response = F("*** Usable Commands: \nhelp\n    usable command list (this printout)\nlist\n    listing pin settings, available events and applied triggers\nset name:stirng type:(analog|digital|swserial|humtemp) direction:(in|out) pin_id:byte\n    set up a pin\nclear (pin_id:byte | name:string)\n    remove a pin setting\nname\n    get the value of the sensor\nname TIMEDVALUE | @event\n    set the value of or apply event on the actuator\nsetevent @event:string TIMEDVALUE\n    set up an event.\n    TIMEDVALUE: value<time>value...32x | \"string\"\n        describe a value list or a value represented by a string\n        special strings: \"!\" means digital negalt\n                         \"PRINT\" means write out actual value on serial\nclearevent @event:string\n    clears the event settings\nsettrigger ~triggername:string {$periodictime:millisec | name((<-|->|=|<|>)value:byte)} name @event\n    set up triggering condition. periodictime=0 means allways\ncleartrigger ~triggername\n");
+	response = F("*** Usable Commands: \r\nhelp\r\n    usable command list (this printout)\r\nlist\r\n    listing pin settings, available events and applied triggers\r\nset name:stirng type:(analog|digital|swserial|humtemp) direction:(in|out) pin_id:byte\r\n    set up a pin\r\nclear (pin_id:byte | name:string)\r\n    remove a pin setting\r\nname\r\n    get the value of the sensor\r\nname TIMEDVALUE | @event\r\n    set the value of or apply event on the actuator\r\nsetevent @event:string TIMEDVALUE\r\n    set up an event.\r\n    TIMEDVALUE: value<time>value...32x | \"string\"\r\n        describe a value list or a value represented by a string\r\n        special strings: \"!\" means digital negalt\r\n                         \"PRINT\" means write out actual value on serial\r\nclearevent @event:string\r\n    clears the event settings\r\nsettrigger ~triggername:string {$periodictime:millisec | name((<-|->|=|<|>)value:byte)} name @event\r\n    set up triggering condition. periodictime=0 means allways\r\ncleartrigger ~triggername\r\n");
 }
 
 void PrintStatus(String& response) {
@@ -42,6 +42,7 @@ FREEMEM();
     }
   }
   for(int k=0;k<16;++k) {
+	  Serial.println(tokens[k]);
     if(tokens[k]==C_LIST) {
       if(command.command==C_INVALID) {
         command.command=LIST;
@@ -122,8 +123,8 @@ FREEMEM();
         }
       }
       command.value.numOfValue=lv+1;
-      if(command.value.numOfValue>0) command.value.value=new int[command.value.numOfValue];
-      if(command.value.numOfValue>1) command.value.time=new int[command.value.numOfValue-1];
+      if(command.value.numOfValue>0) command.value.value=new byte[command.value.numOfValue];
+      if(command.value.numOfValue>1) command.value.time=new unsigned short[command.value.numOfValue-1];
       for(lv=0;valuetokens[lv].length()>0;++lv) {
         if(valuetokens[lv].length()>2 && valuetokens[lv][0]=='0' && valuetokens[lv][1]=='x') { //hex
           command.value.value[lv]=0;
@@ -189,10 +190,10 @@ void ParseTextCommand(WRITING how, String string,String& response,String& errorS
 			PrintStatus(response);
 		}
 		else if (command.command == UPLOAD) {
-
+			// not possible
 		}
 		else if (command.command == DOWNLOAD && command.name != "") {
-			response = "";
+			response = ""; //no direct response
 			if (!SDCard.ReadFile(command.name, how)) {
 				response = F("Could not open ");
 				response += command.name;

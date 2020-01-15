@@ -21,19 +21,20 @@ class TimedValue {
 	byte nextvalue;
 	unsigned long lastRead;
 public:
-	int* time;
-	int* value;
+	unsigned short* time;
+	byte* value;
 	boolean stringType;
 	String string; //only one string
 	byte numOfValue;
 	TimedValue();
 	~TimedValue();
-	TimedValue(int);
+	TimedValue(byte);
+	TimedValue(byte,unsigned short,byte);
 	void set(TimedValue& in);
 	void append(TimedValue& in);
 	void print(String&);
 	String contentToString();
-	void read(int&); //return 0 if cleared the list
+	void read(byte&); //return 0 if cleared the list
 	void purge();
 	void SDSave(File,byte);
 	boolean SDLoad(File& f, String&);
@@ -62,9 +63,10 @@ public:
 };
 // I & O
 class G_Variable : public G_IOBase {
-	int value;
-	int newvalue;
+	byte value;
+	byte newvalue;
 	TimedValue comingValue;
+	boolean preemptive;
 public:
 	byte scale;
 	byte hexaPrint;
@@ -72,7 +74,7 @@ public:
 	G_Variable();
 	G_Variable(byte);
 	~G_Variable();
-	void setup();
+	void setup(int v = 0);
 	virtual void print(String&, String ident = "");
 	virtual String contentToString();
 	virtual void read();
@@ -146,7 +148,7 @@ class G_DigitalActuator : public G_IOBase {
 	TimedValue outputvalue;
 public:
 	G_DigitalActuator(byte);
-	void setup();
+	void setup(boolean v=0);
 	virtual void print(String&, String ident = "");
 	virtual String contentToString();
 	virtual void set(TimedValue*);
@@ -262,7 +264,9 @@ class G_Clock : public G_IOBase {
 	unsigned long lastTick;
 public:
 	G_Clock(byte);
-	void setup(unsigned int y=1,byte m=1,byte d=1,byte h=0,byte mi=0,byte s=0);
+	void setup(String str="0001-01-01 0:0:0");
+	boolean setFromString(String);
+	virtual void set(TimedValue*);
 	virtual void print(String&, String ident = "");
 	virtual String contentToString();
 	virtual void read();
@@ -270,6 +274,48 @@ public:
 //	virtual int getnew() {return newvalue;};
 	virtual String valueToString();
 	virtual void SDSave(File,byte);
+	boolean SDLoad(File& f, String&);
+};
+
+// I & O
+class G_Shutter : public G_IOBase {
+	byte longRun;
+	byte controlValue;
+	TimedValue controlInput; // 0 STOP, 1 UP, 2 DOWN
+	byte selectorButtonPin;
+	byte selectorLedPin;
+	byte upButtonPin;
+	byte downButtonPin;
+	byte centerButtonPin;
+	byte upRelayPin;
+	byte downRelayPin;
+	struct shutterTags {
+		unsigned short selectorButtonValue:1;
+		unsigned short selectorButtonNewValue : 1;
+		unsigned short upButtonValue : 1;
+		unsigned short upButtonNewValue : 1;
+		unsigned short downButtonValue : 1;
+		unsigned short downButtonNewValue : 1;
+		unsigned short centerButtonValue : 1;
+		unsigned short centerButtonNewValue : 1;
+		unsigned short selected : 1;
+		unsigned short longRun : 1;
+		unsigned short upRelayValue : 1;
+		unsigned short downRelayValue : 1;
+		unsigned short relayTriggerValue : 1;
+	} v;
+public:
+	G_Shutter(byte);
+	void setup();
+	virtual void print(String&, String ident = "");
+	virtual String contentToString();
+	virtual void read();
+	virtual void set(TimedValue*);
+	virtual void write();
+	virtual int get() {return controlValue;};
+	//	virtual int getnew() {return newvalue;};
+	virtual String valueToString();
+	virtual void SDSave(File, byte);
 	boolean SDLoad(File& f, String&);
 };
 
@@ -318,18 +364,27 @@ public:
 };
 
 // *** Trigger *********************
+struct Triggered {
+	byte actuator;
+	byte event; //0xff if not event
+	TimedValue* value;
+	Triggered() {
+		actuator = 0; event = 0xff; value = 0;
+	}
+};
+
 class G_Trigger : public G_IOBase {
 	unsigned long lastTick;
 	void fire();
 	void addCondition(G_Condition*);
+	void addTriggered(Triggered*);
 public:
-	byte triggeredActuator;
-	byte triggeredEvent; //0xff if not event
-	TimedValue* triggeredValue;
 	boolean timed;
 	unsigned int timer;
 	G_Condition** conditions;
 	byte nCondition;
+	Triggered** triggered;
+	byte nTriggered;
 
 	G_Trigger();
 	~G_Trigger();
@@ -357,7 +412,7 @@ public:
 	G_IOBase* find(String);
 	void write();
 	void print(String&);
-	void printWname(String&,boolean printname=true);
+	void printWname(String&, String s = "",boolean printname = true);
 	void toStringWname(String&,String s="",boolean printname=true);
 	void SDSave(File,byte);
 	boolean SDLoad(File& f, String& error, String iotypename);
@@ -372,6 +427,7 @@ public:
 	G_IOList dhts;
 	G_IOList keypads4x4;
 	G_IOList clocks;
+	G_IOList shutters;
 	
 	void read();
 	boolean hasChange();

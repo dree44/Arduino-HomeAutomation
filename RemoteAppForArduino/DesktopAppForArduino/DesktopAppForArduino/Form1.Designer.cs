@@ -132,7 +132,7 @@
             this.ipBox.Name = "ipBox";
             this.ipBox.Size = new System.Drawing.Size(125, 20);
             this.ipBox.TabIndex = 1;
-            this.ipBox.Text = "192.168.3.3";
+            this.ipBox.Text = "192.169.3.2";
             this.ipBox.Leave += new System.EventHandler(this.ipBox_Leave);
             // 
             // ipText
@@ -159,7 +159,7 @@
             this.remotePortBox.Name = "remotePortBox";
             this.remotePortBox.Size = new System.Drawing.Size(125, 20);
             this.remotePortBox.TabIndex = 0;
-            this.remotePortBox.Text = "65000";
+            this.remotePortBox.Text = "84";
             this.remotePortBox.Leave += new System.EventHandler(this.portBox_Leave);
             // 
             // localPortBox
@@ -168,7 +168,7 @@
             this.localPortBox.Name = "localPortBox";
             this.localPortBox.Size = new System.Drawing.Size(125, 20);
             this.localPortBox.TabIndex = 4;
-            this.localPortBox.Text = "65000";
+            this.localPortBox.Text = "84";
             this.localPortBox.Leave += new System.EventHandler(this.localPortBox_Leave);
             // 
             // sendPanel
@@ -289,6 +289,7 @@
             this.button2.TabIndex = 4;
             this.button2.Text = "Upload\r\nI/O set\r\nSETTING.JSN";
             this.button2.UseVisualStyleBackColor = true;
+            this.button2.Click += new System.EventHandler(this.button2_Click);
             // 
             // listButton
             // 

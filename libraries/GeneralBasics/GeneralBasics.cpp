@@ -83,5 +83,5 @@ void MemoryCheck(String& out) {
 		out += (F("OK.     - [ "));
 	}
 	out += (freeMemory());
-	out += (F(" bytes ]\n"));
+	out += (F(" bytes ]\r\n"));
 }

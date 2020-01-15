@@ -1,6 +1,7 @@
 #include "ExtendedEthernet.h"
 #include <GeneralCommunication.h>
 #include <GeneralConfig.h>
+#include <MemoryFree.h>
 
 ExtendedEthernet ETH;
 
@@ -9,7 +10,7 @@ void ExtendedEthernet::DetailedCheck(String& out) {
 	out += (F("Ethernet... "));
 	IPAddress local = Ethernet.localIP();
 	if (local[0] == 0 && local[1] == 0 && local[2] == 0 & local[3] == 0) {
-		out+=(F("FAILED.\n"));
+		out+=(F("FAILED.\r\n"));
 		//return;
 	}
 	
@@ -25,7 +26,7 @@ void ExtendedEthernet::DetailedCheck(String& out) {
 	out += (PrintIP(subnet));
 	out += (F(" GATEWAY "));
 	out += (PrintIP(gateway));
-	out += (F(" ]\n"));
+	out += (F(" ]\r\n"));
 	digitalWrite(10, HIGH);
 }
 
@@ -45,6 +46,9 @@ void ExtendedEthernet::Init() {
 	ip[2] = (i >> 8) & 0xFF;
 	ip[3] = i & 0xFF;
 	localPort = gConfig.localPort();
+
+	serverPort = 84; //TODO
+
 	unsigned long g = gConfig.gateway();
 	gateway[0] = (g >> 24) & 0xFF;
 	gateway[1] = (g >> 16) & 0xFF;
@@ -58,6 +62,8 @@ void ExtendedEthernet::Init() {
 
 	Ethernet.begin(mac,ip,gateway,gateway,subnet);
 	Udp.begin(localPort);
+	tcpServer = new EthernetServer(serverPort);
+	tcpServer->begin();
 	digitalWrite(10, HIGH);
 }
 
@@ -89,22 +95,53 @@ void ExtendedEthernet::Receive() {
 	int packetSize = this->Udp.parsePacket();
 	if (packetSize>0)
 	{
+		Serial.print("Receive / packetsize> ");
 		Serial.println(packetSize);
 		// read the packet into packetBuffer
 		char packetBuffer[UDP_TX_PACKET_MAX_SIZE]; //buffer to hold incoming packet,
 		int x = this->Udp.read(packetBuffer, UDP_TX_PACKET_MAX_SIZE);
 		String response="";
-		bool packetType = (((byte)packetBuffer[0] == 0xff) && ((byte)packetBuffer[1] == 0xff));
-		if (packetType) { // control packet // udp stream starting packet with segment number
-			bool start=(packetBuffer[2]==0);
+		bool controlPacket = (((byte)packetBuffer[0] == 0xff) && ((byte)packetBuffer[1] == 0xff));
+		if (controlPacket) { // control packet // udp stream starting packet with segment number
+			bool start = (packetBuffer[2] == 0 || packetBuffer[2] == 2);
+			bool end = (packetBuffer[2] == 1);
+			bool startDownload = (packetBuffer[2] == 2);
 			if(start) {
 				if(udpPayload!=0) delete udpPayload;
-				udpMaxSegment = packetBuffer[3]*256+packetBuffer[4];
-				udpPayload = new char[udpMaxSegment*(UDP_TX_PACKET_MAX_SIZE - 2) + 1];
-				udpPayload[0]='\0';
-			} else if(udpMaxSegment!=0xffff) { //end
+				udpMaxSegment = 0xffff;
+				if (startDownload) {
+					fileName = "";
+					unsigned short i;
+					for (i = 3; i < UDP_TX_PACKET_MAX_SIZE - 3 && packetBuffer[i] != '\0'; ++i)	{
+						fileName += packetBuffer[i];
+					}
+					
+					Serial.println("file open> ");
+					Serial.println(fileName);
+					digitalWrite(4, LOW);
+					digitalWrite(10, HIGH);
+					File xFile= SD.open(fileName.c_str(), O_CREAT | O_TRUNC );
+					if (!xFile) Serial.println("not opened >(");
+					Serial.println("ok> ");
+					xFile.close();
+					Serial.println("closed");
+					digitalWrite(4, HIGH);
+					digitalWrite(10, LOW);
+					if (xFile) {
+						Serial.println("failed");
+					}
+				}
+				else {
+					udpMaxSegment = packetBuffer[3] * 256 + packetBuffer[4];
+					if (udpMaxSegment > freeMemory() / 2) { udpMaxSegment = 0xffff; Serial.println("No memory for receiving big packets."); }
+					udpPayload = new char[udpMaxSegment*(UDP_TX_PACKET_MAX_SIZE - 2) + 1];
+					udpPayload[0] = '\0';
+				}
+			} else if(end && udpMaxSegment!=0xffff) { //end and send back response
 				UDPParseStream(udpPayload,response);
 				if (response != "") {
+					Serial.print("response size> ");
+					Serial.println(response.length());
 					UDPSendback(response);
 					udpMaxSegment = 0xffff;
 					// log sending
@@ -116,10 +153,15 @@ void ExtendedEthernet::Receive() {
 					}
 					Serial.print(", port ");
 					Serial.print(Udp.remotePort());
-					Serial.print(": ");
+					Serial.println(": ");
+					Serial.println(".........................");
 					Serial.println(response);
+					Serial.println(".........................");
 				}
 			}
+			else if (end) {
+			}
+
 		} else if(udpMaxSegment!=0xffff) { // data segment after valid initialization
 			unsigned short segmentNum=packetBuffer[0]*256+packetBuffer[1];
 			unsigned short i;
@@ -128,7 +170,42 @@ void ExtendedEthernet::Receive() {
 			}
 			udpPayload[(segmentNum)*(UDP_TX_PACKET_MAX_SIZE-2)+i-2]='\0';
 		}
+		else if (udpMaxSegment == 0xffff) { // file iras
+			Serial.println("most irjuk");
+			if (fileName!="") {
+				Serial.print("file> ");
+				Serial.println(fileName);
+				digitalWrite(4, LOW);
+				digitalWrite(10, HIGH);
+				File xFile = SD.open(fileName.c_str(), FILE_WRITE);
+				if (!xFile) Serial.println("not opened");
+				String k;
+				for (unsigned short i = 2; packetBuffer[i] != '\0' && i < UDP_TX_PACKET_MAX_SIZE; ++i) {
+					xFile.print('s');
+					xFile.print(packetBuffer[i]);
+					k += packetBuffer[i];
+				}
+				Serial.println(k);
+				Serial.println("kesz");
+				xFile.close();
+				Serial.println("closed");
+				digitalWrite(4, HIGH);
+				digitalWrite(10, LOW);
+			}
+			else {
+				Serial.println("Filename is not exisit");
+			}
+		}
 	}
+
+	//new tcp
+	EthernetClient client = this->tcpServer->available();
+	if (client) {
+		Serial.println("TCP ARRIVED");
+		char c=client.read();
+		Serial.println(c);
+	}
+
 	digitalWrite(10, HIGH);
 }
 
@@ -138,12 +215,17 @@ void ExtendedEthernet::UDPParseStream(String udpStream,String& response) {
     if(errorString!="") response="ERROR: "+errorString;
 }
 
-void ExtendedEthernet::UDPSendback(String response) {
+void ExtendedEthernet::UDPSendback(String& response) {
     short segmensNum=response.length()/(UDP_TX_PACKET_MAX_SIZE-2)+1;
     char backBuffer0[5];
     uint8_t backBuffer1[UDP_TX_PACKET_MAX_SIZE];
     uint8_t backBuffer2[3];
-    // send back answer
+//	Serial.print("segnum> ");
+//	Serial.println(segmensNum);
+//	Serial.println("xxxxxxxxxxxxxxxxxxxxxxxxx");
+//	Serial.println(response);
+//	Serial.println("xxxxxxxxxxxxxxxxxxxxxxxxx");
+	// send back answer
     backBuffer0[0] = 0xff;
 	backBuffer0[1] = 0xff;
 	backBuffer0[2] = 0x00;
