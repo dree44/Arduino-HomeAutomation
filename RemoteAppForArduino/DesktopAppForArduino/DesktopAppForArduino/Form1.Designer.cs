@@ -31,6 +31,7 @@
             this.components = new System.ComponentModel.Container();
             this.sendBox = new System.Windows.Forms.TextBox();
             this.panel1 = new System.Windows.Forms.Panel();
+            this.connLabel = new System.Windows.Forms.Label();
             this.localPortText = new System.Windows.Forms.Label();
             this.portText = new System.Windows.Forms.Label();
             this.localIPBox = new System.Windows.Forms.TextBox();
@@ -87,6 +88,7 @@
             // 
             this.panel1.AutoSize = true;
             this.panel1.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
+            this.panel1.Controls.Add(this.connLabel);
             this.panel1.Controls.Add(this.localPortText);
             this.panel1.Controls.Add(this.portText);
             this.panel1.Controls.Add(this.localIPBox);
@@ -99,6 +101,16 @@
             this.panel1.Name = "panel1";
             this.panel1.Size = new System.Drawing.Size(1038, 35);
             this.panel1.TabIndex = 1;
+            // 
+            // connLabel
+            // 
+            this.connLabel.AutoSize = true;
+            this.connLabel.BackColor = System.Drawing.Color.Gold;
+            this.connLabel.Location = new System.Drawing.Point(470, 9);
+            this.connLabel.Name = "connLabel";
+            this.connLabel.Size = new System.Drawing.Size(87, 13);
+            this.connLabel.TabIndex = 8;
+            this.connLabel.Text = "CONNECTING...";
             // 
             // localPortText
             // 
@@ -132,6 +144,7 @@
             this.ipBox.Name = "ipBox";
             this.ipBox.Size = new System.Drawing.Size(125, 20);
             this.ipBox.TabIndex = 1;
+            this.ipBox.TabStop = false;
             this.ipBox.Text = "192.169.3.2";
             this.ipBox.Leave += new System.EventHandler(this.ipBox_Leave);
             // 
@@ -158,7 +171,8 @@
             this.remotePortBox.Location = new System.Drawing.Point(333, 6);
             this.remotePortBox.Name = "remotePortBox";
             this.remotePortBox.Size = new System.Drawing.Size(125, 20);
-            this.remotePortBox.TabIndex = 0;
+            this.remotePortBox.TabIndex = 4;
+            this.remotePortBox.TabStop = false;
             this.remotePortBox.Text = "84";
             this.remotePortBox.Leave += new System.EventHandler(this.portBox_Leave);
             // 
@@ -168,6 +182,7 @@
             this.localPortBox.Name = "localPortBox";
             this.localPortBox.Size = new System.Drawing.Size(125, 20);
             this.localPortBox.TabIndex = 4;
+            this.localPortBox.TabStop = false;
             this.localPortBox.Text = "84";
             this.localPortBox.Leave += new System.EventHandler(this.localPortBox_Leave);
             // 
@@ -257,7 +272,7 @@
             this.sendButton.Location = new System.Drawing.Point(447, 511);
             this.sendButton.Name = "sendButton";
             this.sendButton.Size = new System.Drawing.Size(75, 48);
-            this.sendButton.TabIndex = 7;
+            this.sendButton.TabIndex = 0;
             this.sendButton.Text = "Send";
             this.sendButton.UseVisualStyleBackColor = true;
             this.sendButton.Click += new System.EventHandler(this.sendButton_Click);
@@ -478,6 +493,7 @@
         private System.Windows.Forms.TextBox localPortBox;
         private System.Windows.Forms.Button dlBasicButton;
         private System.Windows.Forms.Button dlIOButton;
+        private System.Windows.Forms.Label connLabel;
     }
 }
 

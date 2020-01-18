@@ -32,7 +32,7 @@ public:
 	String PrintIP(IPAddress);
 	String PrintMAC();
 	void Receive();
-	void UDPParseStream(String udpStream,String& response);
+	void UDPParseStream(EthernetClient*, String udpStream, String& response);
 	void UDPSendback(String& response);
 	void UDPSendbackFile(File& file);
 };

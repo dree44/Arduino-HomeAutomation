@@ -91,7 +91,7 @@ void serialEvent() {
     } else {
       String errorString="";
       String response="";
-	  ParseTextCommand(GW_SERIAL,serialInputString, response, errorString);
+	  ParseTextCommand(GW_SERIAL,serialInputString, response, errorString,NULL);
       if(errorString!="") {
         Serial.print(F("ERROR: "));
         Serial.println(errorString);

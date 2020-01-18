@@ -15,7 +15,6 @@ namespace DesktopAppForArduino
 {
     public partial class Form1 : Form
     {
-        UDPSender udp;
         TCPSender tcp=new TCPSender();
         String[] receivedPackets;
         uint nReceivedPackets=0;
@@ -112,52 +111,66 @@ namespace DesktopAppForArduino
         {
             sendBox.ResetText();
             sendBox.Text = "list";
-            udp.SendUDP(sendBox.Text);
+            tcp.Send(sendBox.Text);
         }
 
         private void helpButton_Click(object sender, EventArgs e)
         {
             sendBox.ResetText();
             sendBox.Text = "help";
-            udp.SendUDP(sendBox.Text);
+            tcp.Send(sendBox.Text);
         }
 
         private void statusButton_Click(object sender, EventArgs e)
         {
             sendBox.ResetText();
             sendBox.Text = "status";
-            udp.SendUDP(sendBox.Text);
+            tcp.Send(sendBox.Text);
         }
 
         private void sendButton_Click(object sender, EventArgs e)
         {
-            //IPEndPoint("12",12);
-            tcp.SendTCP(sendBox.Text);
-
+            tcp.Send(sendBox.Text);
         }
 
         private void ipBox_Leave(object sender, EventArgs e)
         {
-            udp.init(ipBox.Text, int.Parse(remotePortBox.Text), localIPBox.Text, int.Parse(localPortBox.Text));
+            tcp.End();
         }
 
         private void Form1_Shown(object sender, EventArgs e)
         {
-            udp=new UDPSender();
-            udp.init(ipBox.Text, int.Parse(remotePortBox.Text), localIPBox.Text, int.Parse(localPortBox.Text));
-
-            tcp.init(ipBox.Text, int.Parse(remotePortBox.Text), localIPBox.Text, int.Parse(localPortBox.Text));
-        
         }
 
         private void portBox_Leave(object sender, EventArgs e)
         {
-            udp.init(ipBox.Text, int.Parse(remotePortBox.Text), localIPBox.Text, int.Parse(localPortBox.Text));
+            tcp.End();
         }
+
 
         private void timer_Tick(object sender, EventArgs e)
         {
-            String packet=udp.ReceiveUDP();
+           // this.UseWaitCursor = true;
+
+            tcp.Start(ipBox.Text, int.Parse(remotePortBox.Text), localIPBox.Text, int.Parse(localPortBox.Text), this.connLabel);
+            
+            if (tcp.Connected())
+            {
+                connLabel.Text = "CONNECTED";
+                connLabel.BackColor = Color.Green;
+            }
+            else if(tcp.Reconnecting())
+            {
+                connLabel.Text = "RECONNECTING";
+                connLabel.BackColor = Color.Purple;
+            }
+            else
+            {
+                connLabel.Text = "NOT CONNECTED";
+                connLabel.BackColor = Color.Red;
+            }
+            //incoming tcp request
+            String packet=tcp.Receive();
             if (packet != "") {
                 if(nReceivedPackets<99) {
                     receivedPackets[nReceivedPackets]=packet; 
@@ -170,12 +183,11 @@ namespace DesktopAppForArduino
                 receiveBox.Text = packet;
                 packetNumBox.Text = shownReceivedPackets.ToString();
             }
-
         }
 
         private void localPortBox_Leave(object sender, EventArgs e)
         {
-            udp.init(ipBox.Text, int.Parse(remotePortBox.Text), localIPBox.Text, int.Parse(localPortBox.Text));
+            tcp.End();
         }
 
         private void minusButton_Click(object sender, EventArgs e)
@@ -200,19 +212,19 @@ namespace DesktopAppForArduino
         {
             sendBox.ResetText();
             sendBox.Text = "download IOSET.JSN";
-            udp.SendUDP(sendBox.Text);
+            tcp.Send(sendBox.Text);
         }
 
         private void dlBasicButton_Click(object sender, EventArgs e)
         {
             sendBox.ResetText();
             sendBox.Text = "download BASIC.JSN";
-            udp.SendUDP(sendBox.Text);
+            tcp.Send(sendBox.Text);
         }
 
         private void button2_Click(object sender, EventArgs e)
         {
-            udp.SendUploadUDP("2.prb",sendBox.Text);
+            //tcp.SendUpload("2.prb",sendBox.Text);
         }
 
     }

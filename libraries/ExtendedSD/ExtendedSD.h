@@ -3,6 +3,7 @@
 
 #include <SD.h>
 #include <GeneralLog.h>
+#include <Ethernet.h>
 
 #define SD_VIRTUAL_OUTPUT_PIN 53 //todo setting
 
@@ -18,7 +19,7 @@ public:
 	void Status(WRITING);
 	boolean LoadIO(String&);
 	void SaveIO();
-	boolean ReadFile(String, WRITING);
+	boolean ReadFile(String, WRITING, EthernetClient*);
 };
 
 extern ExtendedSD SDCard;

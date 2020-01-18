@@ -166,7 +166,7 @@ FREEMEM();
   return true;
 }
 
-void ParseTextCommand(WRITING how, String string,String& response,String& errorString) {
+void ParseTextCommand(WRITING how, String string,String& response,String& errorString, EthernetClient* client) {
       digitalWrite(21, HIGH);   // turn the LED on (HIGH is the voltage level)
       delay(10);               // wait for a second
       digitalWrite(21, LOW);    // turn the LED off by making the voltage LOW
@@ -194,7 +194,7 @@ void ParseTextCommand(WRITING how, String string,String& response,String& errorS
 		}
 		else if (command.command == DOWNLOAD && command.name != "") {
 			response = ""; //no direct response
-			if (!SDCard.ReadFile(command.name, how)) {
+			if (!SDCard.ReadFile(command.name, how, client)) {
 				response = F("Could not open ");
 				response += command.name;
 			}

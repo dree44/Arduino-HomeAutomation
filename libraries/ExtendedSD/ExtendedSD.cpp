@@ -119,7 +119,7 @@ boolean ExtendedSD::LoadIO(String& error) {
 	return true;
 }
 
-boolean ExtendedSD::ReadFile(String file,WRITING how) {
+boolean ExtendedSD::ReadFile(String file,WRITING how, EthernetClient* client) {
 	digitalWrite(10, HIGH);
 	digitalWrite(4, LOW);
 
@@ -131,11 +131,21 @@ boolean ExtendedSD::ReadFile(String file,WRITING how) {
 			}
 		}
 		else if (how == GW_UDP) {
-			ETH.UDPSendbackFile(myFile);
+			//ETH.UDPSendbackFile(myFile);
+			while (myFile.available()) {
+				digitalWrite(10, HIGH);
+				digitalWrite(4, LOW);
+				int c = myFile.read();
+				digitalWrite(4, HIGH);
+				digitalWrite(10, LOW);
+				client->write(c);
+				digitalWrite(10, HIGH);
+
+			}
 			digitalWrite(10, HIGH);
-			digitalWrite(4, LOW);
 		}
 		// close the file:
+		digitalWrite(4, LOW);
 		myFile.close();
 		digitalWrite(4, HIGH);
 		return true;

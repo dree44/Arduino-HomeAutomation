@@ -138,7 +138,7 @@ void ExtendedEthernet::Receive() {
 					udpPayload[0] = '\0';
 				}
 			} else if(end && udpMaxSegment!=0xffff) { //end and send back response
-				UDPParseStream(udpPayload,response);
+				UDPParseStream(NULL,udpPayload, response);
 				if (response != "") {
 					Serial.print("response size> ");
 					Serial.println(response.length());
@@ -202,16 +202,28 @@ void ExtendedEthernet::Receive() {
 	EthernetClient client = this->tcpServer->available();
 	if (client) {
 		Serial.println("TCP ARRIVED");
-		char c=client.read();
-		Serial.println(c);
+//		udpPayload = new char[256];
+//		udpPayload[0] = '\0';
+		String u;
+		while (client.available()) {
+			char c = client.read();
+			u += c;
+		}
+		Serial.println(u);
+		String response = "";
+		UDPParseStream(&client, u, response);
+		client.println(response);
+		Serial.print("Sent> ");
+		Serial.println(response);
+//		delete udpPayload;
 	}
 
 	digitalWrite(10, HIGH);
 }
 
-void ExtendedEthernet::UDPParseStream(String udpStream,String& response) {
+void ExtendedEthernet::UDPParseStream(EthernetClient* client, String udpStream,String& response) {
     String errorString="";
-    ParseTextCommand(GW_UDP,udpStream,response,errorString);
+    ParseTextCommand(GW_UDP,udpStream,response,errorString,client);
     if(errorString!="") response="ERROR: "+errorString;
 }
 
