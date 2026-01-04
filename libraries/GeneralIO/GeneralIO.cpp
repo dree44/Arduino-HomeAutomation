@@ -1458,10 +1458,46 @@ void G_Shutter::read() {
 			TimedValue t(0);
 			controlInput.set(t);
 			v.longRun = 0;
-			Serial.println("stop");
+			//Serial.println("stop");
 		}
 	}
 	if (!v.selected) return;
+	if (v.upButtonValue && !v.upButtonNewValue && !v.longRun) {
+		v.longRun = 1;
+		TimedValue t(1, longRun * 1000, 0);
+		controlInput.set(t);
+		//Serial.println("longfel");
+		return;
+	}
+	if (v.upButtonValue && !v.upButtonNewValue && v.longRun) {
+		v.longRun = 0;
+		TimedValue t(0);
+		controlInput.set(t);
+		//Serial.println("stopfel");
+		return;
+	}
+	if (v.downButtonValue && !v.downButtonNewValue && !v.longRun) {
+		v.longRun = 1;
+		TimedValue t(2, longRun * 1000, 0);
+		controlInput.set(t);
+		//Serial.println("longle");
+		return;
+	}
+	if (v.downButtonValue && !v.downButtonNewValue && v.longRun) {
+		v.longRun = 0;
+		TimedValue t(0);
+		controlInput.set(t);
+		//Serial.println("stople");
+		return;
+	}
+	if (v.centerButtonValue && !v.centerButtonNewValue) {
+		v.longRun = 0;
+		TimedValue t(0);
+		controlInput.set(t);
+		//Serial.println("stopcenter");
+		return;
+	}
+	/* régi bonyolult logika
 	if (v.upButtonValue && !v.upButtonNewValue && v.centerButtonNewValue && v.downButtonNewValue) {
 		v.longRun = 0;
 		TimedValue t(1);
@@ -1488,8 +1524,6 @@ void G_Shutter::read() {
 		TimedValue t(2);
 		controlInput.set(t);
 		String str;
-		controlInput.print(str);
-		Serial.println(str);
 		Serial.println("le");
 		return;
 	}
@@ -1497,9 +1531,6 @@ void G_Shutter::read() {
 		v.longRun = 1;
 		TimedValue t(2, longRun * 1000, 0);
 		controlInput.set(t);
-		String str;
-		controlInput.print(str);
-		Serial.println(str);
 		Serial.println("longle");
 		return;
 	}
@@ -1531,6 +1562,7 @@ void G_Shutter::read() {
 		Serial.println("longfel2");
 		return;
 	}
+	*/
 }
 
 void G_Shutter::set(TimedValue* tv) {
