@@ -1376,17 +1376,17 @@ void G_Shutter::setup() {
 	v.longRun = 0;
 
 	pinMode(selectorButtonPin, INPUT);
-	v.selectorButtonValue = 0;
-	v.selectorButtonNewValue = 0;
+	v.selectorButtonValue = 1;
+	v.selectorButtonNewValue = 1;
 	pinMode(upButtonPin, INPUT);
-	v.upButtonValue = 0;
-	v.upButtonNewValue = 0;
+	v.upButtonValue = 1;
+	v.upButtonNewValue = 1;
 	pinMode(downButtonPin, INPUT);
-	v.downButtonValue = 0;
-	v.downButtonNewValue = 0;
+	v.downButtonValue = 1;
+	v.downButtonNewValue = 1;
 	pinMode(centerButtonPin, INPUT);
-	v.centerButtonValue = 0;
-	v.centerButtonNewValue = 0;
+	v.centerButtonValue = 1;
+	v.centerButtonNewValue = 1;
 
 
 	pinMode(selectorLedPin, OUTPUT);

@@ -92,7 +92,7 @@ void ExtendedEthernet::Receive() {
 	digitalWrite(4, HIGH);
 	digitalWrite(10, LOW);
 
-	int packetSize = this->Udp.parsePacket();
+	int packetSize = 0;// this->Udp.parsePacket();
 	if (packetSize>0)
 	{
 		Serial.print("Receive / packetsize> ");
@@ -205,17 +205,92 @@ void ExtendedEthernet::Receive() {
 //		udpPayload = new char[256];
 //		udpPayload[0] = '\0';
 		String u;
+		String response = "";
 		while (client.available()) {
 			char c = client.read();
-			u += c;
+			if (tcpState == NORMAL) {
+				if (u == "UPLOAD") {
+					Serial.println("UPLOAD");
+					tcpState = UPLOADFILENAME;
+					u = "";
+				}
+				else {
+					u += c;
+				}
+			}
+			else if (tcpState == UPLOADFILENAME) {
+				if (c == ' ') {
+					tcpState=UPLOADING;
+					fileName = u;
+					u = "";
+					Serial.println(fileName);
+
+					c = client.read();
+					tcpPayloadLength = c;
+					c = client.read();
+					tcpPayloadLength = tcpPayloadLength *256 + c;
+					Serial.println(tcpPayloadLength);
+					fileStart = true;
+				}
+				else {
+					u += c;
+				}
+			}
+			else if (tcpState == UPLOADING){
+				u += c;
+			}
 		}
-		Serial.println(u);
-		String response = "";
-		UDPParseStream(&client, u, response);
-		client.println(response);
-		Serial.print("Sent> ");
-		Serial.println(response);
-//		delete udpPayload;
+
+		if (tcpState == NORMAL){
+			Serial.println(u);
+			UDPParseStream(&client, u, response);
+			client.println(response);
+			Serial.print("Sent> ");
+			Serial.println(response);
+			//		delete udpPayload;
+		} else if(tcpState==UPLOADFILENAME) {
+			response = "Failed";
+			tcpState = NORMAL;
+			tcpPayloadLength = 0;
+			client.println(response);
+			Serial.print("Sent> ");
+			Serial.println(response);
+		}
+		else if (tcpState == UPLOADING) {
+			response = "OK";
+
+			Serial.println("MOST UPLOAD");
+			Serial.println(u);
+
+			digitalWrite(4, LOW);
+
+			if (fileStart) {
+				SD.remove(const_cast<char*>(fileName.c_str()));
+				fileStart = false;
+			}
+			File file = SD.open(fileName.c_str(), FILE_WRITE);
+			file.write(u.c_str());
+			file.close();		
+			digitalWrite(4, HIGH);
+
+			client.println(response);
+			Serial.print("Sent> ");
+			Serial.println(response);
+
+			Serial.print("payloadlen ");
+			Serial.print(tcpPayloadLength);
+			Serial.print("ulen ");
+			Serial.println(u.length());
+			if (tcpPayloadLength <= u.length()) {
+				Serial.println("TCPSTATE RESET");
+				tcpState = NORMAL;
+				tcpPayloadLength = 0;
+				fileStart = true;
+			}
+			tcpPayloadLength -= u.length();
+
+
+		}
 	}
 
 	digitalWrite(10, HIGH);

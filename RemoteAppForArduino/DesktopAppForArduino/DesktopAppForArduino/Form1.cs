@@ -227,5 +227,13 @@ namespace DesktopAppForArduino
             //tcp.SendUpload("2.prb",sendBox.Text);
         }
 
+        private void uploadBasicBT_Click(object sender, EventArgs e)
+        {
+            string s = "UPLOAD kutyku.val ";
+            s+=((char)(sendBox.Text.Length/256));
+            s += ((char)(sendBox.Text.Length % 256));
+            tcp.Send(s+sendBox.Text);
+        }
+
     }
 }

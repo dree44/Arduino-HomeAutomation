@@ -49,7 +49,7 @@
             this.statusButton = new System.Windows.Forms.Button();
             this.sendButton = new System.Windows.Forms.Button();
             this.helpButton = new System.Windows.Forms.Button();
-            this.button3 = new System.Windows.Forms.Button();
+            this.uploadBasicBT = new System.Windows.Forms.Button();
             this.button2 = new System.Windows.Forms.Button();
             this.listButton = new System.Windows.Forms.Button();
             this.label1 = new System.Windows.Forms.Label();
@@ -145,7 +145,7 @@
             this.ipBox.Size = new System.Drawing.Size(125, 20);
             this.ipBox.TabIndex = 1;
             this.ipBox.TabStop = false;
-            this.ipBox.Text = "192.169.3.2";
+            this.ipBox.Text = "192.168.3.1";
             this.ipBox.Leave += new System.EventHandler(this.ipBox_Leave);
             // 
             // ipText
@@ -197,7 +197,7 @@
             this.sendPanel.Controls.Add(this.statusButton);
             this.sendPanel.Controls.Add(this.sendButton);
             this.sendPanel.Controls.Add(this.helpButton);
-            this.sendPanel.Controls.Add(this.button3);
+            this.sendPanel.Controls.Add(this.uploadBasicBT);
             this.sendPanel.Controls.Add(this.button2);
             this.sendPanel.Controls.Add(this.listButton);
             this.sendPanel.Controls.Add(this.label1);
@@ -287,14 +287,15 @@
             this.helpButton.UseVisualStyleBackColor = true;
             this.helpButton.Click += new System.EventHandler(this.helpButton_Click);
             // 
-            // button3
+            // uploadBasicBT
             // 
-            this.button3.Location = new System.Drawing.Point(104, 565);
-            this.button3.Name = "button3";
-            this.button3.Size = new System.Drawing.Size(95, 48);
-            this.button3.TabIndex = 5;
-            this.button3.Text = "Upload\r\nbasic\r\nBASIC.JSN";
-            this.button3.UseVisualStyleBackColor = true;
+            this.uploadBasicBT.Location = new System.Drawing.Point(104, 565);
+            this.uploadBasicBT.Name = "uploadBasicBT";
+            this.uploadBasicBT.Size = new System.Drawing.Size(95, 48);
+            this.uploadBasicBT.TabIndex = 5;
+            this.uploadBasicBT.Text = "Upload\r\nbasic\r\nBASIC.JSN";
+            this.uploadBasicBT.UseVisualStyleBackColor = true;
+            this.uploadBasicBT.Click += new System.EventHandler(this.uploadBasicBT_Click);
             // 
             // button2
             // 
@@ -471,7 +472,7 @@
         private System.Windows.Forms.Button statusButton;
         private System.Windows.Forms.Button sendButton;
         private System.Windows.Forms.Button helpButton;
-        private System.Windows.Forms.Button button3;
+        private System.Windows.Forms.Button uploadBasicBT;
         private System.Windows.Forms.Button button2;
         private System.Windows.Forms.Button listButton;
         private System.Windows.Forms.Button outputClearButton;

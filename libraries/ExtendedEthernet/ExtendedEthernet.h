@@ -7,6 +7,8 @@
 #include <GeneralLog.h>
 #include <SD.h>
 
+typedef enum  { NORMAL, UPLOADFILENAME, UPLOADING } TCPSTATE;
+
 class ExtendedEthernet {
 	byte mac[6];
 	IPAddress ip;
@@ -18,6 +20,9 @@ class ExtendedEthernet {
 	unsigned short udpMaxSegment;
 	char* udpPayload;
 	String fileName;
+	bool fileStart;
+	TCPSTATE tcpState;
+	unsigned tcpPayloadLength;
 	
 public:
 	EthernetUDP Udp;
@@ -25,6 +30,11 @@ public:
 	ExtendedEthernet() {
 		udpMaxSegment=0xffff;
 		udpPayload=0;
+
+		tcpState = NORMAL;
+		tcpPayloadLength = 0;
+		fileName = "";
+		fileStart = true;
 	}
 	void DetailedCheck(String&);
 	void Init();
