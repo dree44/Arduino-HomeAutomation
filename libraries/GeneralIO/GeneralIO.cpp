@@ -443,7 +443,7 @@ void G_DigitalSensor::setup() {
 	value = 0;
 	newvalue = 0;
 	//setup
-	pinMode(pin, INPUT);
+	pinMode(pin, INPUT_PULLUP);
 }
 
 void G_DigitalSensor::print(String& result,String ident) {
@@ -1190,7 +1190,7 @@ boolean G_I2CLCD::SDLoad(File& f, String& error) {
 	for (char c = f.read(); f.available() && c != '\"'; c = f.read());
 	if (!f.available()) return true;
 	for (char c = f.read(); f.available() && c != '\"'; c = f.read()) str += c;
-	if (str != F("sda")) { error = F("Invalid rfid I/O description: >\""); error += str; error += F("\" insdead of \"sda\""); return false; }
+	if (str != F("sda")) { error = F("Invalid I/O description: >\""); error += str; error += F("\" insdead of \"sda\""); return false; }
 	str = "";
 	for (char c = f.read(); f.available() && c != ','; c = f.read()) if (IsNumber(c)) str += c;
 	this->sdapin = (byte)str.toInt();
@@ -1198,7 +1198,7 @@ boolean G_I2CLCD::SDLoad(File& f, String& error) {
 	for (char c = f.read(); f.available() && c != '\"'; c = f.read());
 	if (!f.available()) return true;
 	for (char c = f.read(); f.available() && c != '\"'; c = f.read()) str += c;
-	if (str != F("scl")) { error = F("Invalid rfid I/O description: >\""); error += str; error += F("\" insdead of \"scl\""); return false; }
+	if (str != F("scl")) { error = F("Invalid I/O description: >\""); error += str; error += F("\" insdead of \"scl\""); return false; }
 	str = "";
 	for (char c = f.read(); f.available() && c != ','; c = f.read()) if (IsNumber(c)) str += c;
 	this->sclpin = (byte)str.toInt();
@@ -1206,7 +1206,7 @@ boolean G_I2CLCD::SDLoad(File& f, String& error) {
 	for (char c = f.read(); f.available() && c != '\"'; c = f.read());
 	if (!f.available()) return true;
 	for (char c = f.read(); f.available() && c != '\"'; c = f.read()) str += c;
-	if (str != F("address")) { error = F("Invalid rfid I/O description: >\""); error += str; error += F("\" insdead of \"address\""); return false; }
+	if (str != F("address")) { error = F("Invalid I/O description: >\""); error += str; error += F("\" insdead of \"address\""); return false; }
 	str = "";
 	for (char c = f.read(); f.available() && c != ','; c = f.read()) if (IsNumber(c)) str += c;
 	this->i2cAddress = (byte)str.toInt();
@@ -1214,7 +1214,7 @@ boolean G_I2CLCD::SDLoad(File& f, String& error) {
 	for (char c = f.read(); f.available() && c != '\"'; c = f.read());
 	if (!f.available()) return true;
 	for (char c = f.read(); f.available() && c != '\"'; c = f.read()) str += c;
-	if (str != F("rows")) { error = F("Invalid rfid I/O description: >\""); error += str; error += F("\" insdead of \"rows\""); return false; }
+	if (str != F("rows")) { error = F("Invalid I/O description: >\""); error += str; error += F("\" insdead of \"rows\""); return false; }
 	str = "";
 	for (char c = f.read(); f.available() && c != ','; c = f.read()) if (IsNumber(c)) str += c;
 	this->rows = (byte)str.toInt();
@@ -1222,7 +1222,7 @@ boolean G_I2CLCD::SDLoad(File& f, String& error) {
 	for (char c = f.read(); f.available() && c != '\"'; c = f.read());
 	if (!f.available()) return true;
 	for (char c = f.read(); f.available() && c != '\"'; c = f.read()) str += c;
-	if (str != F("columns")) { error = F("Invalid rfid I/O description: >\""); error += str; error += F("\" insdead of \"columns\""); return false; }
+	if (str != F("columns")) { error = F("Invalid I/O description: >\""); error += str; error += F("\" insdead of \"columns\""); return false; }
 	str = "";
 	for (char c = f.read(); f.available() && c != '}'; c = f.read()) if (IsNumber(c)) str += c;
 	this->columns = (byte)str.toInt();
@@ -1375,16 +1375,16 @@ void G_Shutter::setup() {
 	v.selected = 0;
 	v.longRun = 0;
 
-	pinMode(selectorButtonPin, INPUT);
+	pinMode(selectorButtonPin, INPUT_PULLUP);
 	v.selectorButtonValue = 1;
 	v.selectorButtonNewValue = 1;
-	pinMode(upButtonPin, INPUT);
+	pinMode(upButtonPin, INPUT_PULLUP);
 	v.upButtonValue = 1;
 	v.upButtonNewValue = 1;
-	pinMode(downButtonPin, INPUT);
+	pinMode(downButtonPin, INPUT_PULLUP);
 	v.downButtonValue = 1;
 	v.downButtonNewValue = 1;
-	pinMode(centerButtonPin, INPUT);
+	pinMode(centerButtonPin, INPUT_PULLUP);
 	v.centerButtonValue = 1;
 	v.centerButtonNewValue = 1;
 
@@ -1576,96 +1576,96 @@ void G_Shutter::SDSave(File f, byte tabs) {
 }
 
 boolean G_Shutter::SDLoad(File& f, String& error) {
-	Serial.println(sizeof(G_Shutter));
+	//Serial.println(sizeof(G_Shutter));
 	String str = "";
 	for (char c = f.read(); f.available() && c != '\"'; c = f.read());
 	if (!f.available()) return true;
 	for (char c = f.read(); f.available() && c != '\"'; c = f.read()) str += c;
-	Serial.println(str);
+	//Serial.println(str);
 	if (str != F("selectorButtonPin")) { error = F("Invalid rfid I/O description: >\""); error += str; error += F("\" insdead of \"selectorButtonPin\""); return false; }
 	str = "";
 	for (char c = f.read(); f.available() && c != ','; c = f.read()) if (IsNumber(c)) str += c;
-	Serial.println(str);
+	//Serial.println(str);
 	this->selectorButtonPin = (byte)str.toInt();
 	str = "";
 	for (char c = f.read(); f.available() && c != '\"'; c = f.read());
 	if (!f.available()) return true;
 	for (char c = f.read(); f.available() && c != '\"'; c = f.read()) str += c;
-	Serial.println(str);
+	//Serial.println(str);
 	if (str != F("selectorLedPin")) { error = F("Invalid rfid I/O description: >\""); error += str; error += F("\" insdead of \"selectorLedPin\""); return false; }
 	str = "";
 	for (char c = f.read(); f.available() && c != ','; c = f.read()) if (IsNumber(c)) str += c;
-	Serial.println(str);
+	//Serial.println(str);
 	this->selectorLedPin = (byte)str.toInt();
 	str = "";
 	for (char c = f.read(); f.available() && c != '\"'; c = f.read());
 	if (!f.available()) return true;
 	for (char c = f.read(); f.available() && c != '\"'; c = f.read()) str += c;
-	Serial.println(str);
+	//Serial.println(str);
 	if (str != F("upButtonPin")) { error = F("Invalid rfid I/O description: >\""); error += str; error += F("\" insdead of \"upButtonPin\""); return false; }
 	str = "";
 	for (char c = f.read(); f.available() && c != ','; c = f.read()) if (IsNumber(c)) str += c;
-	Serial.println(str);
+	//Serial.println(str);
 	this->upButtonPin = (byte)str.toInt();
 	str = "";
 	for (char c = f.read(); f.available() && c != '\"'; c = f.read());
 	if (!f.available()) return true;
 	for (char c = f.read(); f.available() && c != '\"'; c = f.read()) str += c;
-	Serial.println(str);
+	//Serial.println(str);
 	if (str != F("downButtonPin")) { error = F("Invalid rfid I/O description: >\""); error += str; error += F("\" insdead of \"downButtonPin\""); return false; }
 	str = "";
 	for (char c = f.read(); f.available() && c != ','; c = f.read()) if (IsNumber(c)) str += c;
-	Serial.println(str);
+	//Serial.println(str);
 	this->downButtonPin = (byte)str.toInt();
 	str = "";
 	for (char c = f.read(); f.available() && c != '\"'; c = f.read());
 	if (!f.available()) return true;
 	for (char c = f.read(); f.available() && c != '\"'; c = f.read()) str += c;
-	Serial.println(str);
+	//Serial.println(str);
 	if (str != F("centerButtonPin")) { error = F("Invalid rfid I/O description: >\""); error += str; error += F("\" insdead of \"centerButtonPin\""); return false; }
 	str = "";
 	for (char c = f.read(); f.available() && c != ','; c = f.read()) if (IsNumber(c)) str += c;
-	Serial.println(str);
+	//Serial.println(str);
 	this->centerButtonPin = (byte)str.toInt();
 	str = "";
 	for (char c = f.read(); f.available() && c != '\"'; c = f.read());
 	if (!f.available()) return true;
 	for (char c = f.read(); f.available() && c != '\"'; c = f.read()) str += c;
-	Serial.println(str);
+	//Serial.println(str);
 	if (str != F("upRelayPin")) { error = F("Invalid rfid I/O description: >\""); error += str; error += F("\" insdead of \"upRelayPin\""); return false; }
 	str = "";
 	for (char c = f.read(); f.available() && c != ','; c = f.read()) if (IsNumber(c)) str += c;
-	Serial.println(str);
+	//Serial.println(str);
 	this->upRelayPin = (byte)str.toInt();
 	str = "";
 	for (char c = f.read(); f.available() && c != '\"'; c = f.read());
 	if (!f.available()) return true;
 	for (char c = f.read(); f.available() && c != '\"'; c = f.read()) str += c;
-	Serial.println(str);
+	//Serial.println(str);
 	if (str != F("downRelayPin")) { error = F("Invalid rfid I/O description: >\""); error += str; error += F("\" insdead of \"downRelayPin\""); return false; }
 	str = "";
 	for (char c = f.read(); f.available() && c != ','; c = f.read()) if (IsNumber(c)) str += c;
-	Serial.println(str);
+	//Serial.println(str);
 	this->downRelayPin = (byte)str.toInt();
 	str = "";
 	for (char c = f.read(); f.available() && c != '\"'; c = f.read());
 	if (!f.available()) return true;
 	for (char c = f.read(); f.available() && c != '\"'; c = f.read()) str += c;
-	Serial.println(str);
+	//Serial.println(str);
 	if (str != F("relayTrigger")) { error = F("Invalid rfid I/O description: >\""); error += str; error += F("\" insdead of \"relayTrigger\""); return false; }
 	str = "";
 	for (char c = f.read(); f.available() && c != ','; c = f.read()) if (IsNumber(c)) str += c;
-	Serial.println(str);
+	//Serial.println(str);
 	this->v.relayTriggerValue = (byte)str.toInt();
 	str = "";
 	for (char c = f.read(); f.available() && c != '\"'; c = f.read());
 	if (!f.available()) return true;
 	for (char c = f.read(); f.available() && c != '\"'; c = f.read()) str += c;
-	Serial.println(str);
+	//Serial.println(str);
 	if (str != F("fullMove")) { error = F("Invalid rfid I/O description: >\""); error += str; error += F("\" insdead of \"fullMove\""); return false; }
 	str = "";
 	for (char c = f.read(); f.available() && c != '}'; c = f.read()) if (IsNumber(c)) str += c;
-	Serial.println(str);
+	//Serial.println(str);
 	this->longRun = (unsigned)str.toInt();
 
 	gSensors.shutters.add(this);
@@ -2262,8 +2262,8 @@ boolean G_IOList::SDLoad(File& f, String& error, String iotypename) {
 				delete sensor;
 				return false;
 			}
-			Serial.println("digital");
-			FREEMEM();
+			//Serial.println("digital");
+			//FREEMEM();
 		}
 		else if (iotypename == F("rfid")) {
 			G_RFID* sensor = new G_RFID(nameidx);
@@ -2271,8 +2271,8 @@ boolean G_IOList::SDLoad(File& f, String& error, String iotypename) {
 				delete sensor;
 				return false;
 			}
-			Serial.println("rfid");
-			FREEMEM();
+			//Serial.println("rfid");
+			//FREEMEM();
 		}
 		else if (iotypename == F("dht")) {
 			G_DHTSensor* sensor = new G_DHTSensor(nameidx);
@@ -2280,8 +2280,8 @@ boolean G_IOList::SDLoad(File& f, String& error, String iotypename) {
 				delete sensor;
 				return false;
 			}
-			Serial.println("dht");
-			FREEMEM();
+			//Serial.println("dht");
+			//FREEMEM();
 		}
 		else if (iotypename == F("4x4 keypad")) {
 			G_Keypad4x4* sensor = new G_Keypad4x4(nameidx);
@@ -2296,8 +2296,8 @@ boolean G_IOList::SDLoad(File& f, String& error, String iotypename) {
 				delete sensor;
 				return false;
 			}
-			Serial.println("clock");
-			FREEMEM();
+			//Serial.println("clock");
+			//FREEMEM();
 		}
 		else if (iotypename == F("analogA")) {
 			G_AnalogActuator* sensor = new G_AnalogActuator(nameidx);
@@ -2312,8 +2312,8 @@ boolean G_IOList::SDLoad(File& f, String& error, String iotypename) {
 				delete sensor;
 				return false;
 			}
-			Serial.println("digitalA");
-			FREEMEM();
+			//Serial.println("digitalA");
+			//FREEMEM();
 		}
 		else if (iotypename == F("i2c lcdA")) {
 			G_I2CLCD* sensor = new G_I2CLCD(nameidx);
@@ -2321,8 +2321,8 @@ boolean G_IOList::SDLoad(File& f, String& error, String iotypename) {
 				delete sensor;
 				return false;
 			}
-			Serial.println("i2c lcdA");
-			FREEMEM();
+			//Serial.println("i2c lcdA");
+			//FREEMEM();
 		}
 		else if (iotypename == F("events")) {
 			G_Event* sensor = new G_Event(nameidx);
@@ -2330,8 +2330,8 @@ boolean G_IOList::SDLoad(File& f, String& error, String iotypename) {
 				delete sensor;
 				return false;
 			}
-			Serial.println("events");
-			FREEMEM();
+			//Serial.println("events");
+			//FREEMEM();
 		}
 		else if (iotypename == F("triggers")) {
 			G_Trigger* sensor = new G_Trigger();
@@ -2339,8 +2339,8 @@ boolean G_IOList::SDLoad(File& f, String& error, String iotypename) {
 				delete sensor;
 				return false;
 			}
-			Serial.println("triggers");
-			FREEMEM();
+			//Serial.println("triggers");
+			//FREEMEM();
 		}
 		else if (iotypename == F("shutter")) {
 			G_Shutter* sensor = new G_Shutter(nameidx);
@@ -2348,8 +2348,8 @@ boolean G_IOList::SDLoad(File& f, String& error, String iotypename) {
 				delete sensor;
 				return false;
 			}
-			Serial.println("shutter");
-			FREEMEM();
+			//Serial.println("shutter");
+			//FREEMEM();
 		}
 		else return false;
 		String r = "";

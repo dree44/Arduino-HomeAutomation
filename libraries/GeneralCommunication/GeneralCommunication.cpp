@@ -42,7 +42,7 @@ FREEMEM();
     }
   }
   for(int k=0;k<16;++k) {
-	  Serial.println(tokens[k]);
+	  //Serial.println(tokens[k]);
     if(tokens[k]==C_LIST) {
       if(command.command==C_INVALID) {
         command.command=LIST;
